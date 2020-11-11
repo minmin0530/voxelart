@@ -1,5 +1,6 @@
 # voxelart
 <img src="voxelart-logo.png">  
+  
 ### I plan to produce version 3 of the voxel editor.
   
 - Multiple people can edit at the same time on the network.
