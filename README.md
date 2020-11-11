@@ -1,6 +1,6 @@
 # voxelart
 <img src="voxelart-logo.png">  
-I plan to produce version 3 of the voxel editor.
+### I plan to produce version 3 of the voxel editor.
   
 - Multiple people can edit at the same time on the network.
 - We can save the data.
@@ -9,7 +9,7 @@ I plan to produce version 3 of the voxel editor.
   
 
 
-ボクセルエディタのバージョン３を制作予定です。    
+### ボクセルエディタのバージョン３を制作予定です。    
   
 - ネットワークで多人数同時編集が出来る
 - データの保存が出来る
