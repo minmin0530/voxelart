@@ -1,0 +1,59 @@
+<html>
+<head>
+    <title>login</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/106/three.min.js"></script>
+    <script src="lib/OrbitControls.js"></script>
+    <script src="src/main.js"></script>
+    <script>
+        window.onload = function() {
+            var main = new Main();
+
+            fetch('/apinum').then( (res) => res.json() ).then( (num) => {
+                fetch('/api/' + num).then( (res) => res.json() ).then( (docs) => {
+                    const array = [];
+                    document.getElementById("publicroom").innerHTML = "<h1>public room</h1><br>";
+                    for (const doc of docs) {
+                        if (doc.room) {
+                            for (const room of doc.room) {
+                                if (room.private == 1) {
+                                } else {
+                                    array.push({ date: room.date, account: doc.name, room: room.name});
+                                }
+                            }
+                        }
+                    }
+                    array.sort(function(a,b){
+                        return new Date(b.date) - new Date(a.date);
+                    });
+                    for (const a of array) {
+                        document.getElementById("publicroom").innerHTML += "<a href='" + location.href + a.account +'/' + a.room +"'>" + a.date + a.account + '/' + a.room + "<br>";
+                    }
+                })
+            });
+        }
+    </script>
+</head>
+<body style="margin: 0; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+    <div style="position: absolute; display: flex;">
+        <form action="" method="post" style="margin-right: 50px;">
+            <h1>login</h1>
+            <table>
+                <tr>
+                    <td>account name</td>
+                    <td><input id="name" name="name" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>password</td>
+                    <td><input id="password" name="password" type="password" /></td>
+                </tr>
+            </table>
+            <button>login</button>
+            <br><br><br>
+            <a href="signup">sign up</a>
+        </form>
+        <div style="margin-left: 50px;">
+            <div id="publicroom"></div>
+        </div>
+    </div>
+</body>
+</html>

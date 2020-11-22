@@ -1,0 +1,53 @@
+<html>
+<head>
+    <title>user</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/106/three.min.js"></script>
+    <script src="lib/OrbitControls.js"></script>
+    <script src="src/main.js"></script>
+    <script>
+        window.onload = function() {
+            var main = new Main();
+
+            document.getElementById("user").innerHTML = location.pathname.split('/')[1];
+            fetch('/apinum').then( (res) => res.json() ).then( (num) => {
+                fetch('/api/' + num + location.pathname).then( (res) => res.json() ).then( (room) => {
+                    document.getElementById("publicroom").innerHTML = "<h1>public</h1><br>";
+                    document.getElementById("privateroom").innerHTML = "<h1>private</h1><br>";
+                    for (const r of room) {
+                        if (r.private == 1) {
+                            document.getElementById("privateroom").innerHTML += "<a href='" + location.href + '/' + r.name +"'>" + r.date + r.name + "<br>";
+                        } else {
+                            document.getElementById("publicroom").innerHTML += "<a href='" + location.href + '/' + r.name +"'>" + r.date + r.name + "<br>";
+                        }
+                    }
+                });
+            });
+        }
+    </script>
+</head>
+<body style="margin: 0; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+    <div style="position: absolute;">
+        <form action="" method="post">
+            <h1 id="user"></h1>
+            <table>
+                <tr>
+                    <td>room name</td>
+                    <td><input id="roomname" name="roomname" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio" name="roomradio" value="0" checked>public<br>
+                        <input type="radio" name="roomradio" value="1">private<br>
+                    </td>
+                </tr>
+            </table>
+            <button>create room</button>
+        </form>
+        <div style="display: flex;">
+            <h1 style="margin-right: 100px;"><a href="/">home</a></h1>
+            <span style="margin-right: 50px;" id="publicroom"></span>
+            <span style="margin-left: 50px;" id="privateroom"></span>
+        </div>
+    </div>
+</body>
+</html>
