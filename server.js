@@ -73,10 +73,19 @@ app.use(session({
 
 
 const allRoom = async (res, accountname, roomname, roomradio) => {
+
+  let flag = false;
+  for (const rr of room) {
+    if (rr.roomhost == accountname && rr.roomname == roomname) {
+      flag = true;
+    }  
+  }
   const r = new Room();
-  r.roomhost = accountname;
-  r.roomname = roomname;
-  transactionVoxelInsert(r);
+  if (flag == false) {
+    r.roomhost = accountname;
+    r.roomname = roomname;
+    transactionVoxelInsert(r);
+  }
 
   let client;
   try {
@@ -94,7 +103,9 @@ console.log("!!!!!!!!!!!!!!!!")
 
       // await res.redirect(accountname + '/' + roomname);
     } else {
-      room.push(r);
+      if (flag == false) {
+        room.push(r);
+      }
       await allURL();
       await res.redirect(accountname + '/' + roomname);  
     }
@@ -330,7 +341,7 @@ const transactionVoxelDownload = async (emitid, roomhost, roomname, io, socketid
     }
   }
   loginUsers[loginUsers.length - 1].socketid = socketid;
-  io.sockets.connected[socketid].emit(emitid, {
+  io.to(socketid).emit(emitid, {
     userID: loginUsers[loginUsers.length - 1].tempid,
     roomID: loginUsers[loginUsers.length - 1].roomid,
     roomhost: loginUsers[loginUsers.length - 1].roomhost,
@@ -498,14 +509,14 @@ io.on('connection', socket => {
   }
 
   if (connected) {
-    io.sockets.connected[socket.id].emit('connected', {
+    io.to(socket.id).emit('connected', {
       userID: loginUsers[index].tempid,
       // roomID: loginUsers[index].roomid,
       color: loginUsers[index].color,
       room: room[0],
     });
   } else {
-    io.sockets.connected[socket.id].emit('getUserId', loginUsers[loginUsers.length - 1].tempid);
+    io.to(socket.id).emit('getUserId', loginUsers[loginUsers.length - 1].tempid);
   }
   socket.on('getUserId', data => {
     if (data == null) {
@@ -544,7 +555,7 @@ console.log("index:"+index);
         rr = r;
       }
     }
-    io.sockets.connected[socket.id].emit('connected', {
+    io.to(socket.id).emit('connected', {
       userID: data.userid,//loginUsers[index].tempid,
 //      roomID: 0,//loginUsers[index].roomid,
       //color: loginUsers[index].color,
