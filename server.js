@@ -179,11 +179,18 @@ const allURL = async () => {
           app.get('/api/' + apiNumber + '/' + doc.name, (req, res) => {
 //            addURL();
             res.json(doc.room);
+            
           });
 
 
           if (doc.room) {
             for (const r of doc.room) {
+              app.get('/api/' + apiNumber + '/' + doc.name + '/' + r.name, (req, res) => {
+                //            addURL();
+                roomDownload(res, doc.name, r.name);
+                
+              });
+    
               app.get('/' + doc.name + '/' + r.name, (req, res) => {
 
                 let user = {
@@ -272,6 +279,21 @@ const allURL = async () => {
   }
 }
 allURL();
+
+const roomDownload = async (res, roomhost, roomname) => {
+  let client;
+  try {
+    client = await MongoClient.connect('mongodb://127.0.0.1:27017', {useNewUrlParser:true, useUnifiedTopology:true});
+    const db = client.db(dbName);
+    const collection = db.collection('room');
+    const doc = await collection.findOne({roomhost:roomhost, roomname: roomname});
+    await res.json(doc);
+  } catch (error) {
+    console.log(error);
+  } finally {
+//    client.close();
+  }
+}
 
 const transactionKururiDownload = async (data, res) => {
   let client;
@@ -598,6 +620,9 @@ console.log("index:"+index);
       if (r.roomhost == data.roomhost && r.roomname == data.roomname) {
         console.log("put success");
         r.voxel.push(data.voxel);
+
+        transactionVoxelInsert(r);
+
         io.emit('put', {
             // roomID: data.roomID,
             roomhost: data.roomhost,

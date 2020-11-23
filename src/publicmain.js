@@ -98,6 +98,13 @@ class PublicMain {
         this.loop();
     }
 
+    setRoom(room) {
+      console.log(room);
+      for (const voxel of room.voxel) {
+          this.addVoxel(voxel);
+      }
+    }
+
     addVoxel(data) {
         const geometry = new THREE.BoxGeometry(50, 50, 50, 2, 2, 2);
         const material = new THREE.MeshLambertMaterial( { color: data.m } );
@@ -127,10 +134,17 @@ class PublicMain {
             console.log("connected" + data);
 
 
-            for (const voxel of data.room.voxel) {
-                this.addVoxel(voxel);
+            if (data.room.voxel.length > 0) {
+              for (const voxel of data.room.voxel) {
+                  this.addVoxel(voxel);
+              }
+            } else {
+              fetch('/apinum').then( (res) => res.json() ).then( (num) => {
+                  fetch('/api/' + num + location.pathname).then( (res) => res.json() ).then( (room) => {
+                      this.setRoom(room);
+                  });
+              });
             }
-  
 
         });
         this.socket.on('put', (data) => {
