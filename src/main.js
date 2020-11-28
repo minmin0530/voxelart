@@ -14,6 +14,7 @@ class Main {
         this.cubeGeo = {};  //progress_historyでも使う
         this.cubeMaterial = []; //progress_historyでも使う
         this.materialIndex = 0;
+        this.opacity = 1.0;
 
         this.lineBox = [];
         this.objects = []; //progress_historyでも使う
@@ -44,7 +45,7 @@ class Main {
 
         this.cubeGeo = new THREE.BoxBufferGeometry(50, 50, 50);
         for (let l = 0; l < 16; ++l) {
-        this.cubeMaterial.push(new THREE.MeshLambertMaterial({ color: 0xfeb74c }));
+        this.cubeMaterial.push(new THREE.MeshLambertMaterial({ color: 0xff0000, opacity: 1.0, transparent: true  }));
         }
 
         this.raycaster = new THREE.Raycaster();
@@ -105,6 +106,31 @@ class Main {
 
         this.renderer.setClearColor("#aaaaaa", 1.0);
   
+
+        document.getElementById("color1").addEventListener('click', () => {
+            this.rollOverMesh.material.color.set(document.getElementById("color1").value);
+            this.cubeMaterial.push( new THREE.MeshLambertMaterial({ color: document.getElementById("color1").value, opacity: 0.5, transparent: true  }) );
+            this.materialIndex = this.cubeMaterial.length - 1;
+        }, false);
+        document.getElementById("color1").addEventListener('change', () => {
+            this.rollOverMesh.material.color.set(document.getElementById("color1").value);
+            this.cubeMaterial.push( new THREE.MeshLambertMaterial({ color: document.getElementById("color1").value, opacity: 0.5, transparent: true  }) );
+            this.materialIndex = this.cubeMaterial.length - 1;
+        }, false);
+        document.getElementById("alpha1").addEventListener('change', () => {
+            this.opacity = document.getElementById("alpha1").value / 100;
+            console.log(this.opacity);
+            this.cubeMaterial[this.materialIndex].opacity = this.opacity;
+        }, false);
+        document.getElementById("color2").addEventListener('click', () => {
+            this.renderer.setClearColor(document.getElementById("color2").value, 1.0);
+            this.render();
+        }, false);
+        document.getElementById("color2").addEventListener('change', () => {
+            this.renderer.setClearColor(document.getElementById("color2").value, 1.0);
+            this.render();
+        }, false);
+
         this.loop();
     }
 
@@ -249,7 +275,6 @@ class Main {
     
 
     render() {
-        this.renderer.setClearColor("#aaaaaa", 1.0);
         this.renderer.render(this.scene, this.camera);
     }
     
