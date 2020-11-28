@@ -50,8 +50,8 @@ class Main {
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
                     
-        var gridHelper = new THREE.GridHelper(2500, 50);
-        this.scene.add(gridHelper);
+        this.gridHelper = new THREE.GridHelper(2500, 50);
+        this.scene.add(this.gridHelper);
 
         var geometry = new THREE.PlaneBufferGeometry(2500, 2500);
         geometry.rotateX(- Math.PI / 2);
@@ -60,6 +60,22 @@ class Main {
         this.scene.add(this.plane);
 
         this.objects.push(this.plane);
+
+
+        this.gridHelperY = new THREE.GridHelper(2500, 50);
+        this.gridHelperY.rotateZ(- Math.PI / 2);
+        this.gridHelperY.position.y += 1250;
+        this.scene.add(this.gridHelperY);
+        var geometryY = new THREE.PlaneBufferGeometry(2500, 2500);
+        geometryY.rotateY( Math.PI / 2);
+        this.planeY = new THREE.Mesh(geometryY, new THREE.MeshBasicMaterial({ visible: false }));
+        this.planeY.position.y += 1250;
+        this.scene.add(this.planeY);
+
+        this.objects.push(this.planeY);
+
+
+
 
         var ambientLight = new THREE.AmbientLight(0x606060);
         this.scene.add(ambientLight);
@@ -194,6 +210,26 @@ class Main {
         switch (event.keyCode) {
     
           case 16: this.isShiftDown = true; break;
+          case 38:
+            this.isUpKeyDown = true;
+            if (this.isShiftDown) {
+              this.plane.position.y += 50.0;
+              this.gridHelper.position.y += 50.0;
+            } else {
+              this.planeY.position.x -= 50.0;
+              this.gridHelperY.position.x -= 50.0;
+            }  
+            break;
+          case 40:
+            this.isDownKeyDown = true;
+            if (this.isShiftDown) {
+              this.plane.position.y -= 50.0;
+              this.gridHelper.position.y -= 50.0;
+            } else {
+              this.planeY.position.x += 50.0;
+              this.gridHelperY.position.x += 50.0;
+            }  
+            break;
     
         }
     
@@ -204,6 +240,8 @@ class Main {
         switch (event.keyCode) {
     
           case 16: this.isShiftDown = false; break;
+          case 38: this.isUpKeyDown = false; break;
+          case 40: this.isDownKeyDown = true; break;
     
         }
     
