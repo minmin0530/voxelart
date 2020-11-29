@@ -44,9 +44,9 @@ class Main {
 
 
         this.cubeGeo = new THREE.BoxBufferGeometry(50, 50, 50);
-        // for (let l = 0; l < 16; ++l) {
-          this.cubeMaterial.push(new THREE.MeshLambertMaterial({ color: 0xff0000, opacity: 1.0, transparent: true  }));
-        // }
+        for (let l = 0; l < 16; ++l) {
+        this.cubeMaterial.push(new THREE.MeshLambertMaterial({ color: 0xff0000, opacity: 1.0, transparent: true  }));
+        }
 
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
@@ -74,6 +74,9 @@ class Main {
         this.scene.add(this.planeY);
 
         this.objects.push(this.planeY);
+
+
+
 
         var ambientLight = new THREE.AmbientLight(0x606060);
         this.scene.add(ambientLight);
@@ -103,10 +106,11 @@ class Main {
 
         this.renderer.setClearColor("#aaaaaa", 1.0);
   
+
         document.getElementById("color1").addEventListener('click', () => {
-          this.rollOverMesh.material.color.set(document.getElementById("color1").value);
-          this.cubeMaterial.push( new THREE.MeshLambertMaterial({ color: document.getElementById("color1").value, opacity: this.opacity, transparent: true  }) );
-          this.materialIndex = this.cubeMaterial.length - 1;
+            this.rollOverMesh.material.color.set(document.getElementById("color1").value);
+            this.cubeMaterial.push( new THREE.MeshLambertMaterial({ color: document.getElementById("color1").value, opacity: this.opacity, transparent: true  }) );
+            this.materialIndex = this.cubeMaterial.length - 1;
         }, false);
         document.getElementById("color1").addEventListener('change', () => {
             this.rollOverMesh.material.color.set(document.getElementById("color1").value);
@@ -271,7 +275,6 @@ class Main {
     
 
     render() {
-        this.renderer.setClearColor("#aaaaaa", 1.0);
         this.renderer.render(this.scene, this.camera);
     }
     

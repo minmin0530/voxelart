@@ -17,6 +17,7 @@ class PublicMain {
         this.cubeGeo = {};  //progress_historyでも使う
         this.cubeMaterial = []; //progress_historyでも使う
         this.materialIndex = 0;
+        this.opacity = 1.0;
 
         this.lineBox = [];
         this.objects = []; //progress_historyでも使う
@@ -46,15 +47,15 @@ class PublicMain {
 
 
         this.cubeGeo = new THREE.BoxBufferGeometry(50, 50, 50);
-        for (let l = 0; l < 16; ++l) {
-        this.cubeMaterial.push(new THREE.MeshLambertMaterial({ color: 0xfeb74c }));
-        }
+        // for (let l = 0; l < 16; ++l) {
+          this.cubeMaterial.push(new THREE.MeshLambertMaterial({ color: 0xff0000, opacity: 1.0, transparent: true  }));
+        // }
 
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
                     
-        var gridHelper = new THREE.GridHelper(2500, 50);
-        this.scene.add(gridHelper);
+        this.gridHelper = new THREE.GridHelper(2500, 50);
+        this.scene.add(this.gridHelper);
 
         var geometry = new THREE.PlaneBufferGeometry(2500, 2500);
         geometry.rotateX(- Math.PI / 2);
@@ -63,6 +64,19 @@ class PublicMain {
         this.scene.add(this.plane);
 
         this.objects.push(this.plane);
+
+
+        this.gridHelperY = new THREE.GridHelper(2500, 50);
+        this.gridHelperY.rotateZ(- Math.PI / 2);
+        this.gridHelperY.position.y += 1250;
+        this.scene.add(this.gridHelperY);
+        var geometryY = new THREE.PlaneBufferGeometry(2500, 2500);
+        geometryY.rotateY( Math.PI / 2);
+        this.planeY = new THREE.Mesh(geometryY, new THREE.MeshBasicMaterial({ visible: false }));
+        this.planeY.position.y += 1250;
+        this.scene.add(this.planeY);
+
+        this.objects.push(this.planeY);
 
         var ambientLight = new THREE.AmbientLight(0x606060);
         this.scene.add(ambientLight);
@@ -92,6 +106,31 @@ class PublicMain {
 
         this.renderer.setClearColor("#aaaaaa", 1.0);
 
+        document.getElementById("color1").addEventListener('click', () => {
+          this.rollOverMesh.material.color.set(document.getElementById("color1").value);
+          this.cubeMaterial.push( new THREE.MeshLambertMaterial({ color: document.getElementById("color1").value, opacity: this.opacity, transparent: true  }) );
+          this.materialIndex = this.cubeMaterial.length - 1;
+        }, false);
+        document.getElementById("color1").addEventListener('change', () => {
+            this.rollOverMesh.material.color.set(document.getElementById("color1").value);
+            this.cubeMaterial.push( new THREE.MeshLambertMaterial({ color: document.getElementById("color1").value, opacity: this.opacity, transparent: true  }) );
+            this.materialIndex = this.cubeMaterial.length - 1;
+        }, false);
+        document.getElementById("alpha1").addEventListener('change', () => {
+            this.opacity = document.getElementById("alpha1").value / 100;
+            this.cubeMaterial.push( new THREE.MeshLambertMaterial({ color: document.getElementById("color1").value, opacity: this.opacity, transparent: true  }) );
+            this.materialIndex = this.cubeMaterial.length - 1;
+        }, false);
+        document.getElementById("color2").addEventListener('click', () => {
+            this.renderer.setClearColor(document.getElementById("color2").value, 1.0);
+            this.render();
+        }, false);
+        document.getElementById("color2").addEventListener('change', () => {
+            this.renderer.setClearColor(document.getElementById("color2").value, 1.0);
+            this.render();
+        }, false);
+
+
         this.socketio();
 
 
@@ -107,7 +146,7 @@ class PublicMain {
 
     addVoxel(data) {
         const geometry = new THREE.BoxGeometry(50, 50, 50, 2, 2, 2);
-        const material = new THREE.MeshLambertMaterial( { color: data.m } );
+        const material = new THREE.MeshLambertMaterial( { color: data.m, opacity: data.a, transparent: true } );
         const box = new THREE.Mesh(geometry, material);
         box.position.set(data.x * 50, data.y * 50, data.z * 50);
         box.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
@@ -150,8 +189,9 @@ class PublicMain {
         this.socket.on('put', (data) => {
             console.log(data);
 
-            this.addVoxel(data.voxel[data.voxel.length - 1]);
-
+            if (data.userID != this.id) {
+                this.addVoxel(data.voxel[data.voxel.length - 1]);
+            }
             // var voxel = data.voxel[data.voxel.length - 1];//new THREE.Mesh(this.cubeGeo, this.cubeMaterial[this.materialIndex]);
             // // voxel.position.copy(intersect.point).add(intersect.face.normal);
             // // voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
@@ -266,6 +306,8 @@ class PublicMain {
                         y: Math.floor( voxel.position.y / 50 ),
                         z: Math.floor( voxel.position.z / 50 ),
                         m: voxel.material.color,
+                        i: this.materialIndex,
+                        a: this.opacity,
                     },
                     
                 }
@@ -283,27 +325,49 @@ class PublicMain {
     
     onDocumentKeyDown(event) {
     
-        switch (event.keyCode) {
-    
-            case 16: this.isShiftDown = true; break;
-    
-        }
-    
+      switch (event.keyCode) {
+  
+        case 16: this.isShiftDown = true; break;
+        case 38:
+          this.isUpKeyDown = true;
+          if (this.isShiftDown) {
+            this.plane.position.y += 50.0;
+            this.gridHelper.position.y += 50.0;
+          } else {
+            this.planeY.position.x -= 50.0;
+            this.gridHelperY.position.x -= 50.0;
+          }  
+          break;
+        case 40:
+          this.isDownKeyDown = true;
+          if (this.isShiftDown) {
+            this.plane.position.y -= 50.0;
+            this.gridHelper.position.y -= 50.0;
+          } else {
+            this.planeY.position.x += 50.0;
+            this.gridHelperY.position.x += 50.0;
+          }  
+          break;
+  
+      }
+  
     }
-    
+  
     onDocumentKeyUp(event) {
-    
-        switch (event.keyCode) {
-    
-            case 16: this.isShiftDown = false; break;
-    
-        }
-    
+  
+      switch (event.keyCode) {
+  
+        case 16: this.isShiftDown = false; break;
+        case 38: this.isUpKeyDown = false; break;
+        case 40: this.isDownKeyDown = true; break;
+  
+      }
+  
     }
-    
+  
 
     render() {
-        this.renderer.setClearColor("#aaaaaa", 1.0);
+//        this.renderer.setClearColor("#aaaaaa", 1.0);
         this.renderer.render(this.scene, this.camera);
     }
     

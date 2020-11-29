@@ -70,57 +70,90 @@ app.use(session({
   }
 }));
 
+const validateRoom = async (res, rr, doc, accountname, roomname, roomradio, flag) => {  
+  let flagExist = false;
 
+  console.log("@@@" + roomname);
+  for (const r of doc.room) {
+    console.log(r.name);
+    if (r.name == roomname) {
+      flagExist = true;
+      await res.redirect(accountname);
+      break;
+    }
+  }
+  
+  
+  if (flagExist == false) {
 
-const allRoom = async (res, accountname, roomname, roomradio) => {
+    let client;
+    let login = false;
+  
+    try {
+      client = await MongoClient.connect('mongodb://127.0.0.1:27017', {useNewUrlParser:true, useUnifiedTopology:true});
+      const db = client.db(dbName);
+      const collection = db.collection('account');
+      const a = await collection.findOneAndUpdate({name: { $eq: accountname } }, {$push:{room: {name: roomname, private: roomradio, date: new Date() } } }, {upsert:true, returnNewDocument : true});
+      if (a.lastErrorObject.n == 0) {
+        console.log("error");
+      } else {
+        if (flag == false) {
+          room.push(rr);
+        }
+        console.log("!!!!!!!!!!!!!!!");
+        // console.log(a);
+        await allURL(a);
+        await res.redirect(accountname + '/' + roomname);
+      }
+      
+    } catch (error) {
+      console.log(error);
+    } finally {
+    //    client.close();
+    }
+  
+  }
+
+}
+
+const allRoom = async (res, doc, roomname, roomradio) => {
 
   let flag = false;
   for (const rr of room) {
-    if (rr.roomhost == accountname && rr.roomname == roomname) {
+    if (rr.roomhost == doc.name && rr.roomname == roomname) {
       flag = true;
     }  
   }
   const r = new Room();
   if (flag == false) {
-    r.roomhost = accountname;
+    r.roomhost = doc.name;
     r.roomname = roomname;
     transactionVoxelInsert(r);
   }
 
-  let client;
+      validateRoom(res, r, doc, doc.name, roomname, roomradio, flag);
+}
+
+const accountDB = async (res, name, roomname, roomradio) => {
   try {
-    client = await MongoClient.connect('mongodb://127.0.0.1:27017', {useNewUrlParser:true, useUnifiedTopology:true});
-    const db = client.db(dbName);
-    const collection = db.collection('account');
-
-    const a = await collection.findOneAndUpdate({name: { $eq: accountname } }, {$push:{room: {name: roomname, private: roomradio, date: new Date() } } }, {upsert:true, returnNewDocument : true});
-console.log("!!!!!!!!!!!!!!!!")
-    console.log(a);
-    if (a.lastErrorObject.n == 0) {
-      console.log("error");
-      // const b = await collection.findOneAndUpdate({name: { $eq: accountname } }, {$push:{room: {name: roomname, private: roomradio } } }, {upsert:true, returnNewDocument : true});
-      // await addURL(b.value);
-
-      // await res.redirect(accountname + '/' + roomname);
-    } else {
-      if (flag == false) {
-        room.push(r);
-      }
-      await allURL();
-      await res.redirect(accountname + '/' + roomname);  
-    }
+    const client2 = await MongoClient.connect('mongodb://127.0.0.1:27017', {useNewUrlParser:true, useUnifiedTopology:true});
+    const db2 = client2.db(dbName);
+    const collection2 = db2.collection('account');
+    await collection2.findOne({name: name}, (err, docs) => {
+      allRoom(res, docs, roomname, roomradio);
+    });
   } catch (error) {
     console.log(error);
   } finally {
-    client.close();
+//    client.close();
   }
-}
 
+}
 
 app.get('/apinum', (req, res) => {
   res.json(apiNumber);
 });
-const allURL = async () => {
+const allURL = async (adocs) => {
   apiNumber += 1;
   let client;
   let login = false;
@@ -134,7 +167,7 @@ const allURL = async () => {
       if (docs.length) {
         room = docs;
       }
-      console.log(docs);
+      // console.log(docs);
 
     });
 
@@ -145,140 +178,149 @@ const allURL = async () => {
   }
   
 
+  if (adocs != null) {
+    for (const r of adocs.value.room) {
+      app.get('/' + adocs.value.name + '/' + r.name, (req, res) => {
+        let user = {
+          mail:"", name:"", password:"", roomid:"", tempid:"", socketid:"", roomhost:"", roomname:"",
+          color: [
+            Math.floor( Math.random() * 16 ),
+            Math.floor( Math.random() * 16 ),
+            Math.floor( Math.random() * 16 ),
+            Math.floor( Math.random() * 16 ),
+            Math.floor( Math.random() * 16 ),
+            Math.floor( Math.random() * 16 ),
+          ],
+        };
+      
+      
+        user["roomid"] = 0;
+        user["tempid"] = Math.floor(Math.random() * 100000);
+        // room[0].roomid = user.roomid;
+        loginUsers.push(user);
 
-  try {
-    client = await MongoClient.connect('mongodb://127.0.0.1:27017', {useNewUrlParser:true, useUnifiedTopology:true});
-    const db = client.db(dbName);
-    const collection = db.collection('account');
-      await collection.find({}).toArray( (err, docs) => {
-        app.get('/api/' + apiNumber, (req, res) => {
-//          addURL();
-          console.log(docs);
-          res.json(docs);
-        });
+        if (r.private == '0') {              
 
-        for (const doc of docs) {
-          app.get('/' + doc.name, (req, res) => {
-            if (req.session.name == doc.name && req.session.password == doc.password) {
-              res.sendFile(__dirname + "/user.html");
-            } else {
-              res.send("login error");
-            }
-          });
-
-          app.get('/' + doc.name + "/lib/OrbitControls.js", (req, res) => {
-            res.sendFile(__dirname + "/lib/OrbitControls.js");
-          });
-          app.get('/' + doc.name + "/src/main.js", (req, res) => {
-            res.sendFile(__dirname + "/src/main.js");
-          });
-          app.get('/' + doc.name + "/src/publicmain.js", (req, res) => {
-            res.sendFile(__dirname + "/src/publicmain.js");
-          });
-          
-          app.get('/api/' + apiNumber + '/' + doc.name, (req, res) => {
-//            addURL();
-            res.json(doc.room);
-            
-          });
-
-
-          if (doc.room) {
-            for (const r of doc.room) {
-              app.get('/api/' + apiNumber + '/' + doc.name + '/' + r.name, (req, res) => {
-                //            addURL();
-                roomDownload(res, doc.name, r.name);
-                
-              });
-    
-              app.get('/' + doc.name + '/' + r.name, (req, res) => {
-
-                let user = {
-                  mail:"", name:"", password:"", roomid:"", tempid:"", socketid:"", roomhost:"", roomname:"",
-                  color: [
-                    Math.floor( Math.random() * 16 ),
-                    Math.floor( Math.random() * 16 ),
-                    Math.floor( Math.random() * 16 ),
-                    Math.floor( Math.random() * 16 ),
-                    Math.floor( Math.random() * 16 ),
-                    Math.floor( Math.random() * 16 ),
-                  ],
-                };
-              
-              
-                user["roomid"] = 0;
-                user["tempid"] = Math.floor(Math.random() * 100000);
-                // room[0].roomid = user.roomid;
-                loginUsers.push(user);
-
-                if (r.private == '0') {              
-
-                  // for (let i = 0; i < room.length; ++i) {
-                  //   if (room[i].roomhost == doc.name && room[i].roomname == r.name) {
-                  //     loginUsers[loginUsers.length - 1].roomid = i;
-                  //   }
-                  // }
-                  // transactionVoxelDownload('selectRoom', doc.name, r.name, io);
-
-                  res.sendFile(__dirname + "/publicroom.html");
-                } else if (req.session.name == doc.name && req.session.password == doc.password && (r.private == 1 || r.private == '1')) {
-                  res.sendFile(__dirname + "/privateroom.html");
-                } else {
-                  res.send("login error");
-                }
-              });
-            }
-            
-          }
-          app.post('/' + doc.name, (req, res) => {
-
-            let roomnew = {
-              roomname:"", roomradio:"",
-              color: [
-                Math.floor( Math.random() * 16 ),
-                Math.floor( Math.random() * 16 ),
-                Math.floor( Math.random() * 16 ),
-                Math.floor( Math.random() * 16 ),
-                Math.floor( Math.random() * 16 ),
-                Math.floor( Math.random() * 16 ),
-              ],
-            };
-          
-            roomnew["roomname"] = req.body.roomname;
-            roomnew["roomradio"] = req.body.roomradio;
-
-            allRoom(res, doc.name, req.body.roomname, req.body.roomradio);
-
-
-          
-
-
-
-          
-            // req.session.name = req.body.name;
-            // req.session.password = req.body.password;
-            // transactionKururiDownload(user, res);
-          
-            // user["roomid"] = 0;
-            // user["tempid"] = Math.floor(Math.random() * 100000);
-            // room[0].roomid = user.roomid;
-            // loginUsers.push(user);
-          
-          //  res.sendFile(__dirname + "/index.html");
-          
-          });
-          
-
-
+          res.sendFile(__dirname + "/publicroom.html");
+        } else if (req.session.name == adocs.value.name && req.session.password == adocs.value.password && (r.private == 1 || r.private == '1')) {
+          res.sendFile(__dirname + "/privateroom.html");
+        } else {
+          res.send("login error");
         }
+
       });
-  } catch (error) {
-    console.log(error);
-  } finally {
-//    client.close();
+
+    }
   }
+
+    try {
+      client = await MongoClient.connect('mongodb://127.0.0.1:27017', {useNewUrlParser:true, useUnifiedTopology:true});
+      const db = client.db(dbName);
+      const collection = db.collection('account');
+        await collection.find({}).toArray( (err, docs) => {
+
+          app.get('/api/' + apiNumber, (req, res) => {
+  //          addURL();
+            // console.log(docs);
+            res.json(docs);
+          });
+
+          for (const doc of docs) {
+            app.get('/' + doc.name, (req, res) => {
+              if (req.session.name == doc.name && req.session.password == doc.password) {
+                res.sendFile(__dirname + "/user.html");
+              } else {
+                res.send("login error");
+              }
+            });
+
+            app.get('/' + doc.name + "/lib/OrbitControls.js", (req, res) => {
+              res.sendFile(__dirname + "/lib/OrbitControls.js");
+            });
+            app.get('/' + doc.name + "/src/main.js", (req, res) => {
+              res.sendFile(__dirname + "/src/main.js");
+            });
+            app.get('/' + doc.name + "/src/publicmain.js", (req, res) => {
+              res.sendFile(__dirname + "/src/publicmain.js");
+            });
+            
+            app.get('/api/' + apiNumber + '/' + doc.name, (req, res) => {
+  //            addURL();
+              res.json(doc.room);
+              
+            });
+
+
+            if (doc.room) {
+              for (const r of doc.room) {
+                app.get('/api/' + apiNumber + '/' + doc.name + '/' + r.name, (req, res) => {
+                  //            addURL();
+                  roomDownload(res, doc.name, r.name);
+                  
+                });
+      
+                app.get('/' + doc.name + '/' + r.name, (req, res) => {
+
+                  let user = {
+                    mail:"", name:"", password:"", roomid:"", tempid:"", socketid:"", roomhost:"", roomname:"",
+                    color: [
+                      Math.floor( Math.random() * 16 ),
+                      Math.floor( Math.random() * 16 ),
+                      Math.floor( Math.random() * 16 ),
+                      Math.floor( Math.random() * 16 ),
+                      Math.floor( Math.random() * 16 ),
+                      Math.floor( Math.random() * 16 ),
+                    ],
+                  };
+                
+                
+                  user["roomid"] = 0;
+                  user["tempid"] = Math.floor(Math.random() * 100000);
+                  // room[0].roomid = user.roomid;
+                  loginUsers.push(user);
+
+                  if (r.private == '0') {              
+
+                    res.sendFile(__dirname + "/publicroom.html");
+                  } else if (req.session.name == doc.name && req.session.password == doc.password && (r.private == 1 || r.private == '1')) {
+                    res.sendFile(__dirname + "/privateroom.html");
+                  } else {
+                    res.send("login error");
+                  }
+                });
+              }
+              
+            }
+            app.post('/' + doc.name, (req, res) => {
+
+              let roomnew = {
+                roomname:"", roomradio:"",
+                color: [
+                  Math.floor( Math.random() * 16 ),
+                  Math.floor( Math.random() * 16 ),
+                  Math.floor( Math.random() * 16 ),
+                  Math.floor( Math.random() * 16 ),
+                  Math.floor( Math.random() * 16 ),
+                  Math.floor( Math.random() * 16 ),
+                ],
+              };
+            
+              roomnew["roomname"] = req.body.roomname;
+              roomnew["roomradio"] = req.body.roomradio;
+
+              accountDB(res, doc.name, req.body.roomname, req.body.roomradio);
+                      
+            });
+          }
+        });
+    } catch (error) {
+      console.log(error);
+    } finally {
+  //    client.close();
+    }
+
 }
-allURL();
+allURL(null);
 
 const roomDownload = async (res, roomhost, roomname) => {
   let client;
@@ -438,6 +480,7 @@ app.get('/signup', (req, res) => {
 app.post('/signup', async (req, res) => {
   let client;
   let exist = false;
+  let accountnameExist = false;
   try {
     client = await MongoClient.connect('mongodb://127.0.0.1:27017', {useNewUrlParser:true, useUnifiedTopology:true});
     const db = client.db(dbName);
@@ -449,6 +492,10 @@ app.post('/signup', async (req, res) => {
           if (doc.mail == req.body.mail){
             console.log(req.body.mail);
             exist = true;
+          }
+          if (doc.name == req.body.name) {
+            accountnameExist = true;
+            exist = true; 
           }
         }
 
@@ -469,7 +516,11 @@ app.post('/signup', async (req, res) => {
       
           res.sendFile(__dirname + "/signuped.html");
         } else {
-          res.sendFile(__dirname + "/signuperror.html");
+          if (accountnameExist) {
+            res.send("account name is exist");
+          } else {
+            res.sendFile(__dirname + "/signuperror.html");
+          }
         }
       
 

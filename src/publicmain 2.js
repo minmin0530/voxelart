@@ -1,5 +1,8 @@
-class Main {
-    constructor() {
+class PublicMain {
+    constructor(socket) {
+        this.socket = socket;
+        this.roomhost = location.pathname.split('/')[1];
+        this.roomname = location.pathname.split('/')[2];
         this.camera = {};
         this.scene = {};  //progress_historyでも使う
         this.controls = {};
@@ -14,7 +17,6 @@ class Main {
         this.cubeGeo = {};  //progress_historyでも使う
         this.cubeMaterial = []; //progress_historyでも使う
         this.materialIndex = 0;
-        this.opacity = 1.0;
 
         this.lineBox = [];
         this.objects = []; //progress_historyでも使う
@@ -44,15 +46,15 @@ class Main {
 
 
         this.cubeGeo = new THREE.BoxBufferGeometry(50, 50, 50);
-        // for (let l = 0; l < 16; ++l) {
-          this.cubeMaterial.push(new THREE.MeshLambertMaterial({ color: 0xff0000, opacity: 1.0, transparent: true  }));
-        // }
+        for (let l = 0; l < 16; ++l) {
+        this.cubeMaterial.push(new THREE.MeshLambertMaterial({ color: 0xfeb74c }));
+        }
 
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
                     
-        this.gridHelper = new THREE.GridHelper(2500, 50);
-        this.scene.add(this.gridHelper);
+        var gridHelper = new THREE.GridHelper(2500, 50);
+        this.scene.add(gridHelper);
 
         var geometry = new THREE.PlaneBufferGeometry(2500, 2500);
         geometry.rotateX(- Math.PI / 2);
@@ -61,19 +63,6 @@ class Main {
         this.scene.add(this.plane);
 
         this.objects.push(this.plane);
-
-
-        this.gridHelperY = new THREE.GridHelper(2500, 50);
-        this.gridHelperY.rotateZ(- Math.PI / 2);
-        this.gridHelperY.position.y += 1250;
-        this.scene.add(this.gridHelperY);
-        var geometryY = new THREE.PlaneBufferGeometry(2500, 2500);
-        geometryY.rotateY( Math.PI / 2);
-        this.planeY = new THREE.Mesh(geometryY, new THREE.MeshBasicMaterial({ visible: false }));
-        this.planeY.position.y += 1250;
-        this.scene.add(this.planeY);
-
-        this.objects.push(this.planeY);
 
         var ambientLight = new THREE.AmbientLight(0x606060);
         this.scene.add(ambientLight);
@@ -102,32 +91,82 @@ class Main {
         window.addEventListener('resize', event => this.onWindowResize(event), false);
 
         this.renderer.setClearColor("#aaaaaa", 1.0);
-  
-        document.getElementById("color1").addEventListener('click', () => {
-          this.rollOverMesh.material.color.set(document.getElementById("color1").value);
-          this.cubeMaterial.push( new THREE.MeshLambertMaterial({ color: document.getElementById("color1").value, opacity: this.opacity, transparent: true  }) );
-          this.materialIndex = this.cubeMaterial.length - 1;
-        }, false);
-        document.getElementById("color1").addEventListener('change', () => {
-            this.rollOverMesh.material.color.set(document.getElementById("color1").value);
-            this.cubeMaterial.push( new THREE.MeshLambertMaterial({ color: document.getElementById("color1").value, opacity: this.opacity, transparent: true  }) );
-            this.materialIndex = this.cubeMaterial.length - 1;
-        }, false);
-        document.getElementById("alpha1").addEventListener('change', () => {
-            this.opacity = document.getElementById("alpha1").value / 100;
-            console.log(this.opacity);
-            this.cubeMaterial[this.materialIndex].opacity = this.opacity;
-        }, false);
-        document.getElementById("color2").addEventListener('click', () => {
-            this.renderer.setClearColor(document.getElementById("color2").value, 1.0);
-            this.render();
-        }, false);
-        document.getElementById("color2").addEventListener('change', () => {
-            this.renderer.setClearColor(document.getElementById("color2").value, 1.0);
-            this.render();
-        }, false);
+
+        this.socketio();
+
 
         this.loop();
+    }
+
+    setRoom(room) {
+      console.log(room);
+      for (const voxel of room.voxel) {
+          this.addVoxel(voxel);
+      }
+    }
+
+    addVoxel(data) {
+        const geometry = new THREE.BoxGeometry(50, 50, 50, 2, 2, 2);
+        const material = new THREE.MeshLambertMaterial( { color: data.m } );
+        const box = new THREE.Mesh(geometry, material);
+        box.position.set(data.x * 50, data.y * 50, data.z * 50);
+        box.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
+        this.scene.add(box);
+//        var edges = new THREE.EdgesGeometory(box, 0x000000);
+        var edges = new THREE.EdgesGeometry(this.cubeGeo);
+        this.lineBox.push( new THREE.LineSegments( edges, new THREE.LineBasicMaterial({ color: 0x000000 })) );
+        this.lineBox[this.lineBox.length - 1].position.set(data.x * 50, data.y * 50, data.z * 50);
+        this.lineBox[this.lineBox.length - 1].position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
+        this.scene.add(this.lineBox[this.lineBox.length - 1]);
+
+        this.objects.push( box );
+        this.objectsMaterial.push(this.cubeMaterial[this.materialIndex]);
+
+    }
+
+    socketio() {
+        this.socket.on('getUserId', (data) => {
+            console.log("getUserId" + data);
+            this.id = data;
+            this.socket.emit('getUserId', {userid: data, roomhost: this.roomhost, roomname: this.roomname});
+        });
+        this.socket.on('connected', data => {
+            console.log("connected" + data);
+
+
+            if (data.room.voxel.length > 0) {
+              for (const voxel of data.room.voxel) {
+                  this.addVoxel(voxel);
+              }
+            } else {
+              fetch('/apinum').then( (res) => res.json() ).then( (num) => {
+                  fetch('/api/' + num + location.pathname).then( (res) => res.json() ).then( (room) => {
+                      this.setRoom(room);
+                  });
+              });
+            }
+
+        });
+        this.socket.on('put', (data) => {
+            console.log(data);
+
+            this.addVoxel(data.voxel[data.voxel.length - 1]);
+
+            // var voxel = data.voxel[data.voxel.length - 1];//new THREE.Mesh(this.cubeGeo, this.cubeMaterial[this.materialIndex]);
+            // // voxel.position.copy(intersect.point).add(intersect.face.normal);
+            // // voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+            // this.scene.add(voxel);
+            // var edges = new THREE.EdgesGeometry(this.cubeGeo);
+            // this.lineBox.push( new THREE.LineSegments( edges, new THREE.LineBasicMaterial({ color: 0x000000 })) );
+            // this.lineBox[this.lineBox.length - 1].position.//copy( intersect.point ).add( intersect.face.normal );
+            // this.lineBox[this.lineBox.length - 1].position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );						
+            // this.scene.add(this.lineBox[this.lineBox.length - 1]);
+
+            
+            // this.objects.push(voxel);
+            // this.objectsMaterial.push(this.cubeMaterial[this.materialIndex]);
+
+        });
     }
 
     onWindowResize() {
@@ -165,7 +204,7 @@ class Main {
         // }
       }
     
-      onDocumentMouseDown(event) {
+    onDocumentMouseDown(event) {
         if (this.isShiftDown) {
     
     
@@ -216,6 +255,21 @@ class Main {
                 
                 this.objects.push(voxel);
                 this.objectsMaterial.push(this.cubeMaterial[this.materialIndex]);
+
+                this.socket.emit("put",
+                {
+                    userID: this.id,
+                    roomhost: this.roomhost,
+                    roomname: this.roomname,
+                    voxel: {
+                        x: Math.floor( voxel.position.x / 50 ),
+                        y: Math.floor( voxel.position.y / 50 ),
+                        z: Math.floor( voxel.position.z / 50 ),
+                        m: voxel.material.color,
+                    },
+                    
+                }
+                );
               }
     
             }
@@ -225,49 +279,27 @@ class Main {
           }
         }
     
-      }
+    }
     
-      onDocumentKeyDown(event) {
-    
-        switch (event.keyCode) {
-    
-          case 16: this.isShiftDown = true; break;
-          case 38:
-            this.isUpKeyDown = true;
-            if (this.isShiftDown) {
-              this.plane.position.y += 50.0;
-              this.gridHelper.position.y += 50.0;
-            } else {
-              this.planeY.position.x -= 50.0;
-              this.gridHelperY.position.x -= 50.0;
-            }  
-            break;
-          case 40:
-            this.isDownKeyDown = true;
-            if (this.isShiftDown) {
-              this.plane.position.y -= 50.0;
-              this.gridHelper.position.y -= 50.0;
-            } else {
-              this.planeY.position.x += 50.0;
-              this.gridHelperY.position.x += 50.0;
-            }  
-            break;
-    
-        }
-    
-      }
-    
-      onDocumentKeyUp(event) {
+    onDocumentKeyDown(event) {
     
         switch (event.keyCode) {
     
-          case 16: this.isShiftDown = false; break;
-          case 38: this.isUpKeyDown = false; break;
-          case 40: this.isDownKeyDown = true; break;
+            case 16: this.isShiftDown = true; break;
     
         }
     
-      }
+    }
+    
+    onDocumentKeyUp(event) {
+    
+        switch (event.keyCode) {
+    
+            case 16: this.isShiftDown = false; break;
+    
+        }
+    
+    }
     
 
     render() {
