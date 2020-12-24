@@ -28,7 +28,10 @@ class PublicMain {
         this.colorChangeFlag = false;
         this.cameraAngle = 0.0;
         this.cameraZoom = 700.0;
-    
+        this.item1 = new Item1();
+        this.item2 = new Item2();
+        this.item3 = new Item3();
+
         this.init();
     }
 
@@ -106,6 +109,134 @@ class PublicMain {
 
         this.renderer.setClearColor("#aaaaaa", 1.0);
 
+
+
+          fetch('/apinew').then( (res) => res.json() ).then( (docs) => {
+            console.log(docs)
+            this.item1.setName(docs[0].roomhost + "/" + docs[0].roomname);
+            this.item2.setName(docs[1].roomhost + "/" + docs[1].roomname);
+            this.item3.setName(docs[2].roomhost + "/" + docs[2].roomname);
+            this.item1.setVoxel(docs[0].voxel);
+            this.item2.setVoxel(docs[1].voxel);
+            this.item3.setVoxel(docs[2].voxel);
+              // const array = [];
+              // document.getElementById("publicroom").innerHTML = "<h1>public room</h1><br>";
+              // for (const doc of docs) {
+              //     if (doc.room) {
+              //         for (const room of doc.room) {
+              //             if (room.private == 1) {
+              //             } else {
+              //                 array.push({ date: room.date, account: doc.name, room: room.name});
+              //             }
+              //         }
+              //     }
+              // }
+              // array.sort(function(a,b){
+              //     return new Date(b.date) - new Date(a.date);
+              // });
+              // for (const a of array) {
+              //     document.getElementById("publicroom").innerHTML += "<a href='" + location.href + a.account +'/' + a.room +"'>" + a.date + a.account + '/' + a.room + "<br>";
+              // }
+          });
+
+
+
+
+
+
+
+
+
+        document.getElementById("add1").addEventListener('click', () => {
+          const voxels = this.item1.getVoxel();
+          for (const voxel of voxels) {
+            this.addVoxel(voxel);
+          }
+
+          this.socket.emit("puts",
+          {
+              userID: this.id,
+              roomhost: this.roomhost,
+              roomname: this.roomname,
+              voxels: voxels,              
+          }
+          );
+
+          // const voxels = [];
+          // for (let i = 1; i < this.objects.length; ++i) {
+          //   voxels.push({
+          //     voxel: {
+          //         x: Math.floor( this.objects[i].position.x / 50 ),
+          //         y: Math.floor( this.objects[i].position.y / 50 ),
+          //         z: Math.floor( this.objects[i].position.z / 50 ),
+          //         m: this.objects[i].material.color,
+          //         // i: this.materialIndex,
+          //         a: this.objects[i].material.opacity,
+          //     },
+          //   });
+          // }
+          // this.item1.setVoxel(voxels);
+        }, false);
+        document.getElementById("add2").addEventListener('click', () => {
+          const voxels = this.item2.getVoxel();
+          for (const voxel of voxels) {
+            this.addVoxel(voxel);
+          }
+
+          this.socket.emit("puts",
+          {
+              userID: this.id,
+              roomhost: this.roomhost,
+              roomname: this.roomname,
+              voxels: voxels,              
+          }
+          );
+
+          // const voxels = [];
+          // for (let i = 1; i < this.objects.length; ++i) {
+          //   voxels.push({
+          //     voxel: {
+          //         x: Math.floor( this.objects[i].position.x / 50 ),
+          //         y: Math.floor( this.objects[i].position.y / 50 ),
+          //         z: Math.floor( this.objects[i].position.z / 50 ),
+          //         m: this.objects[i].material.color,
+          //         // i: this.materialIndex,
+          //         a: this.objects[i].material.opacity,
+          //     },
+          //   });
+          // }
+          // this.item2.setVoxel(voxels);
+        }, false);
+        document.getElementById("add3").addEventListener('click', () => {
+          const voxels = this.item3.getVoxel();
+          for (const voxel of voxels) {
+            this.addVoxel(voxel);
+          }
+
+          this.socket.emit("puts",
+          {
+              userID: this.id,
+              roomhost: this.roomhost,
+              roomname: this.roomname,
+              voxels: voxels,              
+          }
+          );
+
+          // const voxels = [];
+          // for (let i = 1; i < this.objects.length; ++i) {
+          //   voxels.push({
+          //     voxel: {
+          //         x: Math.floor( this.objects[i].position.x / 50 ),
+          //         y: Math.floor( this.objects[i].position.y / 50 ),
+          //         z: Math.floor( this.objects[i].position.z / 50 ),
+          //         m: this.objects[i].material.color,
+          //         // i: this.materialIndex,
+          //         a: this.objects[i].material.opacity,
+          //     },
+          //   });
+          // }
+          // this.item3.setVoxel(voxels);
+        }, false);
         document.getElementById("color1").addEventListener('click', () => {
           this.rollOverMesh.material.color.set(document.getElementById("color1").value);
           this.cubeMaterial.push( new THREE.MeshLambertMaterial({ color: document.getElementById("color1").value, opacity: this.opacity, transparent: true  }) );

@@ -29,6 +29,15 @@ app.get("/src/main.js", (req, res) => {
 app.get("/src/publicmain.js", (req, res) => {
   res.sendFile(__dirname + "/src/publicmain.js");
 });
+app.get("/src/item1.js", (req, res) => {
+  res.sendFile(__dirname + "/src/item1.js");
+});
+app.get("/src/item2.js", (req, res) => {
+  res.sendFile(__dirname + "/src/item2.js");
+});
+app.get("/src/item3.js", (req, res) => {
+  res.sendFile(__dirname + "/src/item3.js");
+});
 
 class Room {
   constructor() {
@@ -150,6 +159,19 @@ const accountDB = async (res, name, roomname, roomradio) => {
 
 }
 
+const newVoxelDB = async (res) => {
+  client = await MongoClient.connect('mongodb://127.0.0.1:27017', {useNewUrlParser:true, useUnifiedTopology:true});
+  const db = client.db(dbName);
+  const collection = db.collection('room');
+    await collection.find({}).sort({"date":-1}).limit(3).toArray( (err, docs) => {
+        res.json(docs);
+    });
+
+}
+
+app.get('/apinew', (req, res) => {
+  newVoxelDB(res);  
+});
 app.get('/apinum', (req, res) => {
   res.json(apiNumber);
 });
@@ -242,6 +264,15 @@ const allURL = async (adocs) => {
             });
             app.get('/' + doc.name + "/src/publicmain.js", (req, res) => {
               res.sendFile(__dirname + "/src/publicmain.js");
+            });
+            app.get('/' + doc.name + "/src/item1.js", (req, res) => {
+              res.sendFile(__dirname + "/src/item1.js");
+            });
+            app.get('/' + doc.name + "/src/item2.js", (req, res) => {
+              res.sendFile(__dirname + "/src/item2.js");
+            });
+            app.get('/' + doc.name + "/src/item3.js", (req, res) => {
+              res.sendFile(__dirname + "/src/item3.js");
             });
             
             app.get('/api/' + apiNumber + '/' + doc.name, (req, res) => {
@@ -662,6 +693,27 @@ console.log("index:"+index);
   });
 
   socket.on('loadRoom', data => {
+  });
+
+  socket.on('puts', data => {
+    console.log(data);
+    console.log(room);
+    for (const r of room) {
+      if (r.roomhost == data.roomhost && r.roomname == data.roomname) {
+        console.log("puts success");
+        r.voxel = r.voxel.concat(data.voxels);
+
+        transactionVoxelInsert(r);
+
+        // io.emit('put', {
+        //     // roomID: data.roomID,
+        //     roomhost: data.roomhost,
+        //     roomname: data.roomname,
+        //     userID: data.userID,
+        //     voxel: r.voxel,
+        // });
+      }
+    }
   });
 
   socket.on('put', data => {
