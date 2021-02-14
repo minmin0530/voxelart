@@ -11,7 +11,10 @@ class PublicMain {
         this.mouse = {};
         this.raycaster = {};
         this.isShiftDown = false;
+        this.isMouseDown = false;
     
+        this.rollOverMeshAfterPos = new THREE.Vector3(0.0, 0.0, 0.0);
+        this.rollOverMeshBeforePos = new THREE.Vector3(0.0, 0.0, 0.0);
         this.rollOverMesh = {};
         this.rollOverMaterial = {};
         this.cubeGeo = {};  //progress_historyでも使う
@@ -41,7 +44,7 @@ class PublicMain {
         // カメラを作成
         this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
         this.camera.position.set(this.cameraZoom * Math.cos(Math.PI / 180.0 * this.cameraAngle), this.cameraZoom, this.cameraZoom * Math.sin(Math.PI / 180.0 * this.cameraAngle));
-        this.camera.lookAt(0, 0, 0);
+        this.camera.lookAt(0, this.cameraZoom / 2.0, 0);
 
         var rollOverGeo = new THREE.BoxBufferGeometry(50, 50, 50);
         this.rollOverMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 0.5, transparent: true });
@@ -98,9 +101,11 @@ class PublicMain {
         document.body.appendChild(this.renderer.domElement);
 
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.target.set(0.0, this.cameraZoom / 2.0, 0.0);
 
         document.addEventListener('mousemove', event => this.onDocumentMouseMove(event), false);
         document.addEventListener('mousedown', event => this.onDocumentMouseDown(event), false);
+        document.addEventListener('mouseup', event => this.onDocumentMouseUp(event), false);
         document.addEventListener('keydown', event => this.onDocumentKeyDown(event), false);
         document.addEventListener('keyup', event => this.onDocumentKeyUp(event), false);
         // document.addEventListener( 'scroll', onDocumentScroll, false );
@@ -114,11 +119,15 @@ class PublicMain {
           fetch('/apinew').then( (res) => res.json() ).then( (docs) => {
             console.log(docs)
             this.item1.setName(docs[0].roomhost + "/" + docs[0].roomname);
-            this.item2.setName(docs[1].roomhost + "/" + docs[1].roomname);
-            this.item3.setName(docs[2].roomhost + "/" + docs[2].roomname);
             this.item1.setVoxel(docs[0].voxel);
-            this.item2.setVoxel(docs[1].voxel);
-            this.item3.setVoxel(docs[2].voxel);
+            if (docs.length >= 2) {
+              this.item2.setName(docs[1].roomhost + "/" + docs[1].roomname);
+              this.item2.setVoxel(docs[1].voxel);
+              if (docs.length >= 3) {
+                this.item3.setName(docs[2].roomhost + "/" + docs[2].roomname);
+                this.item3.setVoxel(docs[2].voxel);
+              }
+            }
               // const array = [];
               // document.getElementById("publicroom").innerHTML = "<h1>public room</h1><br>";
               // for (const doc of docs) {
@@ -261,6 +270,8 @@ class PublicMain {
             this.render();
         }, false);
 
+        this.camera.updateProjectionMatrix();
+        this.controls.update();
 
         this.socketio();
 
@@ -356,16 +367,114 @@ class PublicMain {
     
         this.raycaster.setFromCamera(this.mouse, this.camera);
     
-        var intersects = this.raycaster.intersectObjects(this.objects);
+        const intersects = this.raycaster.intersectObjects(this.objects);
+
+        if (intersects.length > 0 && (intersects[0].object == this.plane || intersects[0].object == this.planeY ) ) {
+          const intersect = intersects[ 0 ];
+          this.rollOverMesh.position.copy(intersect.point).add(intersect.face.normal);
+          this.rollOverMesh.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+
+        }
     
-        if (intersects.length > 0) {
+        if (this.isShiftDown == false && intersects.length > 0) {
     
-          var intersect = intersects[ 0 ];
+          const intersect = intersects[ 0 ];
           this.rollOverMesh.position.copy(intersect.point).add(intersect.face.normal);
           this.rollOverMesh.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
     
         }
     
+
+        if (this.isShiftDown && this.isMouseDown &&
+
+          !(
+            this.rollOverMesh.position.x == this.rollOverMeshBeforePos.x &&
+            this.rollOverMesh.position.y == this.rollOverMeshBeforePos.y &&
+            this.rollOverMesh.position.z == this.rollOverMeshBeforePos.z
+            )
+
+
+          ) {
+    
+            this.rollOverMeshBeforePos.set(this.rollOverMesh.position.x, this.rollOverMesh.position.y, this.rollOverMesh.position.z);
+    
+          event.preventDefault();
+    
+          this.mouse.set((event.clientX / window.innerWidth) * 2 - 1, - (event.clientY / window.innerHeight) * 2 + 1);
+    
+          this.raycaster.setFromCamera(this.mouse, this.camera);
+    
+          const intersects = this.raycaster.intersectObjects(this.objects);
+    
+          if (intersects.length > 0) {
+    
+            const intersect = intersects[ 0 ];
+    
+            // delete cube
+    
+            if (this.anglePutFlag) {
+    
+              if (intersect.object !== this.plane) {
+    
+                this.scene.remove(intersect.object);
+    
+                this.objectsMaterial.splice(this.objectsMaterial.indexOf(intersect.object.material), 1);
+                this.objects.splice(this.objects.indexOf(intersect.object), 1);
+    
+              }
+    
+              // create cube
+    
+            } else {
+    
+              if (this.colorChangeFlag) {
+                if (intersect.object !== this.plane) {
+                  this.objects[ this.objects.indexOf(intersect.object) ].material = this.cubeMaterial[this.materialIndex];
+                }
+              } else {
+                var voxel = new THREE.Mesh(this.cubeGeo, this.cubeMaterial[this.materialIndex]);
+                voxel.position.copy(intersect.point).add(intersect.face.normal);
+                voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+                this.scene.add(voxel);
+                var edges = new THREE.EdgesGeometry(this.cubeGeo);
+                this.lineBox.push( new THREE.LineSegments( edges, new THREE.LineBasicMaterial({ color: 0x000000 })) );
+                this.lineBox[this.lineBox.length - 1].position.copy( intersect.point ).add( intersect.face.normal );
+                this.lineBox[this.lineBox.length - 1].position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );						
+                this.scene.add(this.lineBox[this.lineBox.length - 1]);
+
+                
+                this.objects.push(voxel);
+                this.objectsMaterial.push(this.cubeMaterial[this.materialIndex]);
+
+                this.socket.emit("put",
+                {
+                    userID: this.id,
+                    roomhost: this.roomhost,
+                    roomname: this.roomname,
+                    voxel: {
+                        x: Math.floor( voxel.position.x / 50 ),
+                        y: Math.floor( voxel.position.y / 50 ),
+                        z: Math.floor( voxel.position.z / 50 ),
+                        m: voxel.material.color,
+                        i: this.materialIndex,
+                        a: this.opacity,
+                    },
+                    
+                }
+                );
+              }
+    
+            }
+    
+    //        this.render();
+    
+          }
+        }
+
+
+
+
+
         this.render();
     
         // if (isShiftDown) {
@@ -376,6 +485,7 @@ class PublicMain {
       }
     
     onDocumentMouseDown(event) {
+      this.isMouseDown = true;
         if (this.isShiftDown) {
     
     
@@ -453,12 +563,14 @@ class PublicMain {
         }
     
     }
-    
+    onDocumentMouseUp(event) {
+      this.isMouseDown = false;
+    }
     onDocumentKeyDown(event) {
     
       switch (event.keyCode) {
   
-        case 16: this.isShiftDown = true; break;
+        case 16: this.isShiftDown = true; this.controls.enabled = false; break;
         case 38:
           this.isUpKeyDown = true;
           if (this.isShiftDown) {
@@ -488,7 +600,7 @@ class PublicMain {
   
       switch (event.keyCode) {
   
-        case 16: this.isShiftDown = false; break;
+        case 16: this.isShiftDown = false; this.controls.enabled = true; break;
         case 38: this.isUpKeyDown = false; break;
         case 40: this.isDownKeyDown = true; break;
   
