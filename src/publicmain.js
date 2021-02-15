@@ -270,6 +270,37 @@ class PublicMain {
             this.render();
         }, false);
 
+        document.getElementById("download").addEventListener('click', () => {
+
+          const voxels = [];
+          for (let i = 1; i < this.objects.length; ++i) {
+            voxels.push({
+              voxel: {
+                  x: Math.floor( this.objects[i].position.x / 50 ),
+                  y: Math.floor( this.objects[i].position.y / 50 ),
+                  z: Math.floor( this.objects[i].position.z / 50 ),
+                  m: this.objects[i].material.color,
+                  // i: this.materialIndex,
+                  a: this.objects[i].material.opacity,
+              },
+            });
+          }
+          // this.item1.setVoxel(voxels);
+
+
+
+
+          const blob = new Blob([JSON.stringify(voxels)], {type: 'text/plain'});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          document.body.appendChild(a);
+          a.download = 'foo.txt';
+          a.href = url;
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        }, false);
+
         this.camera.updateProjectionMatrix();
         this.controls.update();
 
