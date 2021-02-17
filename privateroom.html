@@ -2,20 +2,29 @@
 <head>
     <title>private</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/106/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.0/socket.io.js"></script>
     <script src="lib/OrbitControls.js"></script>
     <script src="src/main.js"></script>
     <script>
         window.onload = function() {
-            var main = new Main();
+            const socket = io();
+            const main = new Main(socket);
+
+            const arr = location.pathname.split('/');
+            document.getElementById("roomname").innerHTML = arr[2];
+
+
         }
     </script>
 </head>
 <body style="margin: 0; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-    <h1 style="position: absolute;">private</h1>
-
-    <input type="color" id="color1" value="#ff0000" style="position: absolute; left:150px; top:50px;">
-    <input type="range" id="alpha1" value="100"     style="position: absolute; left:150px; top:80px;">
-    <input type="color" id="color2" value="#aaaaaa" style="position: absolute; left:150px; top:130px;">
-
+    <div style="position: absolute; right: 200px; top: 50px;">
+        <h1>private</h1>
+        <h1 id="roomname"></h1>
+    </div>
+    <input type="color"  id="color1" value="#ff0000" style="position: absolute; left:350px; top:50px;">
+    <input type="range"  id="alpha1" value="100"     style="position: absolute; left:350px; top:80px;">
+    <input type="color"  id="color2" value="#aaaaaa" style="position: absolute; left:350px; top:130px;">
+    <button id="download" style="position: absolute; left:350px; top:160px;">download</button>    
 </body>
 </html>

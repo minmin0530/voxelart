@@ -14,7 +14,7 @@ const users = new Map();
 const loginUsers = [];
 
 const url = 'mongodb://localhost:27017';
-const dbName = 'myMongo4';
+const dbName = 'myMongo7';
 const connectOption = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -28,6 +28,9 @@ app.get("/src/main.js", (req, res) => {
 });
 app.get("/src/publicmain.js", (req, res) => {
   res.sendFile(__dirname + "/src/publicmain.js");
+});
+app.get("/src/login.js", (req, res) => {
+  res.sendFile(__dirname + "/src/login.js");
 });
 app.get("/src/item1.js", (req, res) => {
   res.sendFile(__dirname + "/src/item1.js");
@@ -47,6 +50,7 @@ class Room {
     this.roomname = null;
     this.date = null;
     this.message = [];
+    this.private = 0;
   }
 }
 
@@ -107,6 +111,7 @@ const validateRoom = async (res, rr, doc, accountname, roomname, roomradio, flag
         console.log("error");
       } else {
         if (flag == false) {
+          rr.private = roomradio;
           room.push(rr);
         }
         console.log("!!!!!!!!!!!!!!!");
@@ -134,6 +139,7 @@ const allRoom = async (res, doc, roomname, roomradio) => {
     }  
   }
   const r = new Room();
+  r.private = roomradio;
   if (flag == false) {
     r.roomhost = doc.name;
     r.roomname = roomname;
@@ -163,9 +169,9 @@ const newVoxelDB = async (res) => {
   client = await MongoClient.connect('mongodb://127.0.0.1:27017', {useNewUrlParser:true, useUnifiedTopology:true});
   const db = client.db(dbName);
   const collection = db.collection('room');
-    await collection.find({}).sort({"date":-1}).limit(3).toArray( (err, docs) => {
-        res.json(docs);
-    });
+  await collection.find({private: "0"}).sort({"date":-1}).limit(3).toArray( (err, docs) => {
+      res.json(docs);
+  });
 
 }
 
@@ -464,6 +470,7 @@ const transactionKururiInsert = async (data, res) => {
     const r = new Room();
     r.roomhost = data.name;
     r.roomname = data.room.name;
+    r.private = data.room.private;
     room.push(r);
     await allURL();
   } catch (error) {
@@ -485,7 +492,7 @@ console.log(data.message);
       roomhost: data.roomhost, roomname: data.roomname//, voxel: data.voxel, users: data.users, date:data.date
     }, {$set:data}, true );
     if (a.result.n == 0) {
-      await collection.insertOne({roomhost: data.roomhost, roomname: data.roomname, message: data.message, voxel: data.voxel, users: data.users, date: data.date});
+      await collection.insertOne({private: data.private, roomhost: data.roomhost, roomname: data.roomname, message: data.message, voxel: data.voxel, users: data.users, date: data.date});
     } else {
       console.log("insert error");
     }
