@@ -20,6 +20,10 @@ const connectOption = {
     useUnifiedTopology: true,
 }
 var apiNumber = 0;
+
+app.get("/download", (req, res) => {
+  res.download(__dirname + "/server.js");
+});
 app.get("/lib/OrbitControls.js", (req, res) => {
   res.sendFile(__dirname + "/lib/OrbitControls.js");
 });
@@ -366,6 +370,7 @@ const roomDownload = async (res, roomhost, roomname) => {
     const db = client.db(dbName);
     const collection = db.collection('room');
     const doc = await collection.findOne({roomhost:roomhost, roomname: roomname});
+    console.log(doc);
     await res.json(doc);
   } catch (error) {
     console.log(error);
