@@ -27,6 +27,12 @@ app.get("/download", (req, res) => {
 app.get("/lib/OrbitControls.js", (req, res) => {
   res.sendFile(__dirname + "/lib/OrbitControls.js");
 });
+app.get("/yoshiki/lib/GLTFExporter.js", (req, res) => {
+  res.sendFile(__dirname + "/lib/GLTFExporter.js");
+});
+app.get("/yoshiki/lib/three.js", (req, res) => {
+  res.sendFile(__dirname + "/lib/three.js");
+});
 app.get("/src/main.js", (req, res) => {
   res.sendFile(__dirname + "/src/main.js");
 });
@@ -492,15 +498,17 @@ const transactionVoxelInsert = async (data, res) => {
     client = await MongoClient.connect('mongodb://127.0.0.1:27017', {useNewUrlParser:true, useUnifiedTopology:true});
     const db = client.db(dbName);
     const collection = db.collection('room');
-console.log(data.message);
     const a = await collection.updateOne({
       roomhost: data.roomhost, roomname: data.roomname//, voxel: data.voxel, users: data.users, date:data.date
-    }, {$set:data}, true );
-    if (a.result.n == 0) {
-      await collection.insertOne({private: data.private, roomhost: data.roomhost, roomname: data.roomname, message: data.message, voxel: data.voxel, users: data.users, date: data.date});
-    } else {
-      console.log("insert error");
-    }
+    }, {$set:data}, {upsert: true});
+
+    res.json({result: "success!!"});
+    // console.log(a);
+    // if (a.result.n == 0) {
+    //   await collection.insertOne({private: false, roomhost: data.roomhost, roomname: data.roomname, voxel: data.voxel, materials: data.materials, date: data.date});
+    // } else {
+    //   console.log("insert error");
+    // }
   } catch (error) {
     console.log(error);
   } finally {
@@ -512,6 +520,20 @@ console.log(data.message);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+app.post('/getroom', async (req, res) => {
+  let client;
+  let login = false;
+  try {
+    client = await MongoClient.connect('mongodb://127.0.0.1:27017', {useNewUrlParser:true, useUnifiedTopology:true});
+    const db = client.db(dbName);
+    const collection = db.collection('room');
+    const doc = await collection.findOne({roomhost:req.body.roomhost, roomname: req.body.roomname});
+    await res.json({room: doc});
+  } catch (error) {
+    console.log(error);
+  } finally {
+  }
+});
 app.get('/', (req, res) => {
   res.sendFile(__dirname + "/login.html");
 //  res.sendFile(__dirname + "/index.html");
@@ -804,7 +826,9 @@ console.log("index:"+index);
   // });
 });
 
-
+app.post('/save', (req, res) => {
+  transactionVoxelInsert(req.body, res);
+});
 
 http.listen(8080, () => {
   console.log('listening on :8080');

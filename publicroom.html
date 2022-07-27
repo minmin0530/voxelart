@@ -4,6 +4,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/106/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.0/socket.io.js"></script>
     <script src="lib/OrbitControls.js"></script>
+    <script src="lib/GLTFExporter.js"></script>
     <script src="src/item1.js"></script>
     <script src="src/item2.js"></script>
     <script src="src/item3.js"></script>
@@ -26,11 +27,43 @@
         <div id="username"></div>
     </div>
     <input type="color"    id="color1" value="#ff0000" style="position: absolute; left:350px; top:50px;">
-    <input type="range"    id="alpha1" value="100"     style="position: absolute; left:350px; top:80px;">
+    <input type="color"    id="color2" value="#00ff00" style="position: absolute; left:400px; top:50px;">
+    <input type="color"    id="color3" value="#0000ff" style="position: absolute; left:450px; top:50px;">
+    <input type="color"    id="color4" value="#ffff00" style="position: absolute; left:500px; top:50px;">
+    <input type="color"    id="color5" value="#ff00ff" style="position: absolute; left:550px; top:50px;">
+    <input type="color"    id="color6" value="#00ffff" style="position: absolute; left:600px; top:50px;">
+    <input type="color"    id="color7" value="#ffffff" style="position: absolute; left:650px; top:50px;">
+    <input type="color"    id="color8" value="#aaaaaa" style="position: absolute; left:700px; top:50px;">
+    <input type="color"    id="color9" value="#555555" style="position: absolute; left:750px; top:50px;">
+    <input type="color"    id="color10" value="#000000" style="position: absolute; left:800px; top:50px;">
+    <input type="color"    id="color11" value="#880000" style="position: absolute; left:850px; top:50px;">
+    <input type="color"    id="color12" value="#008800" style="position: absolute; left:900px; top:50px;">
+    <input type="color"    id="color13" value="#000088" style="position: absolute; left:950px; top:50px;">
+    <input type="color"    id="color14" value="#008888" style="position: absolute; left:1000px; top:50px;">
+    <input type="color"    id="color15" value="#880088" style="position: absolute; left:1050px; top:50px;">
+    <input type="color"    id="color16" value="#888800" style="position: absolute; left:1100px; top:50px;">
+    <input type="range"    id="alpha1" value="100"     style="position: absolute; left:350px; top:80px; width: 45px;">
+    <input type="range"    id="alpha2" value="100"     style="position: absolute; left:400px; top:80px; width: 45px;">
+    <input type="range"    id="alpha3" value="100"     style="position: absolute; left:450px; top:80px; width: 45px;">
+    <input type="range"    id="alpha4" value="100"     style="position: absolute; left:500px; top:80px; width: 45px;">
+    <input type="range"    id="alpha5" value="100"     style="position: absolute; left:550px; top:80px; width: 45px;">
+    <input type="range"    id="alpha6" value="100"     style="position: absolute; left:600px; top:80px; width: 45px;">
+    <input type="range"    id="alpha7" value="100"     style="position: absolute; left:650px; top:80px; width: 45px;">
+    <input type="range"    id="alpha8" value="100"     style="position: absolute; left:700px; top:80px; width: 45px;">
+    <input type="range"    id="alpha9" value="100"     style="position: absolute; left:750px; top:80px; width: 45px;">
+    <input type="range"    id="alpha10" value="100"     style="position: absolute; left:800px; top:80px; width: 45px;">
+    <input type="range"    id="alpha11" value="100"     style="position: absolute; left:850px; top:80px; width: 45px;">
+    <input type="range"    id="alpha12" value="100"     style="position: absolute; left:900px; top:80px; width: 45px;">
+    <input type="range"    id="alpha13" value="100"     style="position: absolute; left:950px; top:80px; width: 45px;">
+    <input type="range"    id="alpha14" value="100"     style="position: absolute; left:1000px; top:80px; width: 45px;">
+    <input type="range"    id="alpha15" value="100"     style="position: absolute; left:1050px; top:80px; width: 45px;">
+    <input type="range"    id="alpha16" value="100"     style="position: absolute; left:1100px; top:80px; width: 45px;">
+
     <div style="position: absolute; left:350px; top:100px;">削除<input type="checkbox" id="delete"></div>
-    <input type="color"    id="color2" value="#aaaaaa" style="position: absolute; left:350px; top:130px;">
+    <input type="color"    id="colorback" value="#aaaaaa" style="position: absolute; left:350px; top:130px;">
 
     <button id="download" style="position: absolute; left:350px; top:170px;">download</button>
+    <button id="save"     style="position: absolute; left:350px; top:200px;">保存</button>
     <!-- <div id="item1" style="position: absolute; left:0px; top:20px; width:300px; height: 300px;"></div>
     <div id="item2" style="position: absolute; left:0px; top:370px; width:300px; height: 300px;"></div>
     <div id="item3" style="position: absolute; left:0px; top:720px; width:300px; height: 300px;"></div> -->

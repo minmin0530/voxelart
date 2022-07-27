@@ -1,5 +1,6 @@
 class PublicMain {
     constructor(socket) {
+  
         this.socket = socket;
         this.roomhost = location.pathname.split('/')[1];
         this.roomname = location.pathname.split('/')[2];
@@ -8,6 +9,7 @@ class PublicMain {
         this.controls = {};
         this.renderer = {};
         this.plane = {};
+        this.planeY = {};
         this.mouse = {};
         this.raycaster = {};
         this.isShiftDown = false;
@@ -20,11 +22,11 @@ class PublicMain {
         this.cubeGeo = {};  //progress_historyでも使う
         this.cubeMaterial = []; //progress_historyでも使う
         this.materialIndex = 0;
-        this.opacity = 1.0;
-
+        this.opacities = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
         this.lineBox = [];
         this.objects = []; //progress_historyでも使う
         this.objectsMaterial = [];  //progress_historyでも使う
+        this.voxelSaveData = [];
         this.contents = '';
         this.form = {};
         this.anglePutFlag = false;
@@ -42,6 +44,7 @@ class PublicMain {
     init() {
         // シーンを作成
         this.scene = new THREE.Scene();
+        this.scene.name = "Scene";
         // カメラを作成
         this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
         this.camera.position.set(this.cameraZoom * Math.cos(Math.PI / 180.0 * this.cameraAngle), this.cameraZoom, this.cameraZoom * Math.sin(Math.PI / 180.0 * this.cameraAngle));
@@ -54,9 +57,26 @@ class PublicMain {
 
 
         this.cubeGeo = new THREE.BoxBufferGeometry(this.BOX_SIZE, this.BOX_SIZE, this.BOX_SIZE);
-        // for (let l = 0; l < 16; ++l) {
-          this.cubeMaterial.push(new THREE.MeshLambertMaterial({ color: 0xff0000, opacity: 1.0, transparent: true  }));
-        // }
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0x0000ff, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0xffff00, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0xff00ff, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0x00ffff, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0xaaaaaa, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0x555555, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0x000000, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0x880000, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0x008800, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0x000088, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0x880000, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0x008888, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0x880088, opacity: 1.0, transparent: true  }));
+        this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0x888800, opacity: 1.0, transparent: true  }));
+
+
+
 
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
@@ -157,27 +177,54 @@ class PublicMain {
 
 
 
-        document.getElementById("color1").addEventListener('click', () => {
-          this.rollOverMesh.material.color.set(document.getElementById("color1").value);
-          this.cubeMaterial.push( new THREE.MeshLambertMaterial({ color: document.getElementById("color1").value, opacity: this.opacity, transparent: true  }) );
-          this.materialIndex = this.cubeMaterial.length - 1;
-        }, false);
-        document.getElementById("color1").addEventListener('change', () => {
-            this.rollOverMesh.material.color.set(document.getElementById("color1").value);
-            this.cubeMaterial.push( new THREE.MeshLambertMaterial({ color: document.getElementById("color1").value, opacity: this.opacity, transparent: true  }) );
-            this.materialIndex = this.cubeMaterial.length - 1;
-        }, false);
-        document.getElementById("alpha1").addEventListener('change', () => {
-            this.opacity = document.getElementById("alpha1").value / 100;
-            this.cubeMaterial.push( new THREE.MeshLambertMaterial({ color: document.getElementById("color1").value, opacity: this.opacity, transparent: true  }) );
-            this.materialIndex = this.cubeMaterial.length - 1;
-        }, false);
-        document.getElementById("color2").addEventListener('click', () => {
+        for (let i = 0; i < 16; ++i) {
+          document.getElementById("color" + (i + 1)).addEventListener('click', () => {
+            this.rollOverMesh.material.color.set(document.getElementById("color" + (i + 1)).value);
+            this.cubeMaterial[i] = new THREE.MeshBasicMaterial({ color: document.getElementById("color" + (i + 1)).value, opacity: this.opacities[i], transparent: true  });
+            this.materialIndex = i;
+            let j = 0;
+            for (const o of this.objects) {
+              if (o != this.plane && o != this.planeY) {
+                console.log(this.voxelSaveData[j]);
+                o.material = this.cubeMaterial[this.voxelSaveData[j].m];
+                ++j;
+              }
+            }
+          }, false);
+          document.getElementById("color" + (i + 1)).addEventListener('change', () => {
+            this.rollOverMesh.material.color.set(document.getElementById("color" + (i + 1)).value);
+            this.cubeMaterial[i] = new THREE.MeshBasicMaterial({ color: document.getElementById("color" + (i + 1)).value, opacity: this.opacities[i], transparent: true  });
+            this.materialIndex = i;
+            let j = 0;
+            for (const o of this.objects) {
+              if (o != this.plane && o != this.planeY) {
+                console.log(this.voxelSaveData[j].m);
+                o.material = this.cubeMaterial[this.voxelSaveData[j].m];
+                ++j;
+              }
+            }
+          }, false);
+          document.getElementById("alpha" + (i + 1)).addEventListener('change', () => {
+            this.opacities[i] = document.getElementById("alpha" + (i + 1)).value / 100;
+            this.cubeMaterial[i] = new THREE.MeshBasicMaterial({ color: document.getElementById("color" + (i + 1)).value, opacity: this.opacities[i], transparent: true  });
+            this.materialIndex = i;
+            let j = 0;
+            for (const o of this.objects) {
+              if (o != this.plane && o != this.planeY) {
+                console.log(this.voxelSaveData[j].m);
+                o.material = this.cubeMaterial[this.voxelSaveData[j].m];
+                ++j;
+              }
+            }
+          }, false);
+        }
+
+        document.getElementById("colorback").addEventListener('click', () => {
             this.renderer.setClearColor(document.getElementById("color2").value, 1.0);
             this.render();
         }, false);
-        document.getElementById("color2").addEventListener('change', () => {
-            this.renderer.setClearColor(document.getElementById("color2").value, 1.0);
+        document.getElementById("colorback").addEventListener('change', () => {
+            this.renderer.setClearColor(document.getElementById("colorback").value, 1.0);
             this.render();
         }, false);
         document.getElementById("delete").addEventListener('change', () => {
@@ -186,39 +233,150 @@ class PublicMain {
         }, false);
         document.getElementById("download").addEventListener('click', () => {
 
-          const voxels = [];
-          for (let i = 1; i < this.objects.length; ++i) {
-            voxels.push({
-              voxel: {
-                  x: Math.floor( this.objects[i].position.x / 50 ),
-                  y: Math.floor( this.objects[i].position.y / 50 ),
-                  z: Math.floor( this.objects[i].position.z / 50 ),
-                  m: this.objects[i].material.color,
-                  // i: this.materialIndex,
-                  a: this.objects[i].material.opacity,
-              },
-            });
+          // // const voxels = [];
+          // // for (let i = 1; i < this.objects.length; ++i) {
+          // //   voxels.push({
+          // //     voxel: {
+          // //         x: Math.floor( this.objects[i].position.x / 50 ),
+          // //         y: Math.floor( this.objects[i].position.y / 50 ),
+          // //         z: Math.floor( this.objects[i].position.z / 50 ),
+          // //         m: this.objects[i].material.color,
+          // //         // i: this.materialIndex,
+          // //         a: this.objects[i].material.opacity,
+          // //     },
+          // //   });
+          // // }
+          // // // this.item1.setVoxel(voxels);
+          // const adjust = 0;
+          // const blob = new Blob([JSON.stringify({
+          //   voxel: this.voxelSaveData,
+          //   materials: [
+          //     {color: this.cubeMaterial[0].color, alpha: this.opacities[0]},
+          //     {color: this.cubeMaterial[1].color, alpha: this.opacities[1]},
+          //     {color: this.cubeMaterial[2].color, alpha: this.opacities[2]},
+          //     {color: this.cubeMaterial[3].color, alpha: this.opacities[3]},
+          //     {color: this.cubeMaterial[4].color, alpha: this.opacities[4]},
+          //     {color: this.cubeMaterial[5].color, alpha: this.opacities[5]},
+          //     {color: this.cubeMaterial[6].color, alpha: this.opacities[6]},
+          //     {color: this.cubeMaterial[7].color, alpha: this.opacities[7]},
+          //     {color: this.cubeMaterial[8].color, alpha: this.opacities[8]},
+          //     {color: this.cubeMaterial[9].color, alpha: this.opacities[9]},
+          //     {color: this.cubeMaterial[10].color, alpha: this.opacities[10]},
+          //     {color: this.cubeMaterial[11].color, alpha: this.opacities[11]},
+          //     {color: this.cubeMaterial[12].color, alpha: this.opacities[12]},
+          //     {color: this.cubeMaterial[13].color, alpha: this.opacities[13]},
+          //     {color: this.cubeMaterial[14].color, alpha: this.opacities[14]},
+          //     {color: this.cubeMaterial[15].color, alpha: this.opacities[15]}
+          //   ]
+          // })], {type: 'text/plain'});
+          // const url = URL.createObjectURL(blob);
+          // const a = document.createElement("a");
+          // document.body.appendChild(a);
+          // a.download = 'foo.txt';
+          // a.href = url;
+          // a.click();
+          // a.remove();
+          // URL.revokeObjectURL(url);
+
+          this.scene.remove(this.plane);
+          this.scene.remove(this.planeY);
+          this.scene.remove(this.gridHelper);
+          this.scene.remove(this.gridHelperY);
+          this.scene.remove(this.rollOverMesh);
+
+          for (const l of this.lineBox) {
+            this.scene.remove(l);
           }
-          // this.item1.setVoxel(voxels);
 
 
+          // for (const m of this.cubeMaterial) {
+          //   m.color = Math.floor(Math.random() * 16777216);
+          // }
 
 
-          const blob = new Blob([JSON.stringify(voxels)], {type: 'text/plain'});
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          document.body.appendChild(a);
-          a.download = 'foo.txt';
-          a.href = url;
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
+          // origin
+          this.exportGLTF(this.scene);
+
+          this.scene.add(this.plane);
+          this.scene.add(this.planeY);
+          this.scene.add(this.gridHelper);
+          this.scene.add(this.gridHelperY);
+          this.scene.add(this.rollOverMesh);
+
+          for (const l of this.lineBox) {
+            this.scene.add(l);
+          }
+
+
+          // for (let h = 0; h < 999; ++h) {
+
+          //   for (let i = 0; i < 16; ++i) {
+          //     this.cubeMaterial[i] = new THREE.MeshBasicMaterial({ color: Math.floor(Math.random() * 16777216), opacity: this.opacities[i], transparent: true  });
+          //   }
+
+          //   let j = 0;
+          //   for (const o of this.objects) {
+          //     if (o != this.plane && o != this.planeY) {
+          //       o.material = this.cubeMaterial[this.voxelSaveData[j].m];
+          //       ++j;
+          //     }
+          //   }
+          //   this.exportGLTF(this.scene);
+          // }
         }, false);
+        document.getElementById("save").addEventListener('click', () => {
+          const sendData = {
+            roomhost: this.roomhost,
+            roomname: this.roomname,
+            voxel: this.voxelSaveData,
+            materials: [
+              {color: this.cubeMaterial[0].color.getHex(), alpha: this.opacities[0]},
+              {color: this.cubeMaterial[1].color.getHex(), alpha: this.opacities[1]},
+              {color: this.cubeMaterial[2].color.getHex(), alpha: this.opacities[2]},
+              {color: this.cubeMaterial[3].color.getHex(), alpha: this.opacities[3]},
+              {color: this.cubeMaterial[4].color.getHex(), alpha: this.opacities[4]},
+              {color: this.cubeMaterial[5].color.getHex(), alpha: this.opacities[5]},
+              {color: this.cubeMaterial[6].color.getHex(), alpha: this.opacities[6]},
+              {color: this.cubeMaterial[7].color.getHex(), alpha: this.opacities[7]},
+              {color: this.cubeMaterial[8].color.getHex(), alpha: this.opacities[8]},
+              {color: this.cubeMaterial[9].color.getHex(), alpha: this.opacities[9]},
+              {color: this.cubeMaterial[10].color.getHex(), alpha: this.opacities[10]},
+              {color: this.cubeMaterial[11].color.getHex(), alpha: this.opacities[11]},
+              {color: this.cubeMaterial[12].color.getHex(), alpha: this.opacities[12]},
+              {color: this.cubeMaterial[13].color.getHex(), alpha: this.opacities[13]},
+              {color: this.cubeMaterial[14].color.getHex(), alpha: this.opacities[14]},
+              {color: this.cubeMaterial[15].color.getHex(), alpha: this.opacities[15]}
+            ]
+          };
+
+          console.log(sendData);
+          const param = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(sendData),
+          };
+          fetch('/save', param).then( res => res.json() ).then( (data) => { console.log(data); });
+        }, false);
+
+
+        const param = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({roomhost: this.roomhost, roomname: this.roomname}),
+        };
+
+        fetch('/getroom', param).then( (res) => res.json() ).then( (room) => {
+            this.setRoom(room);
+        });
 
         this.camera.updateProjectionMatrix();
         this.controls.update();
 
-        this.socketio();
+        // this.socketio();
 
 
         this.loop();
@@ -226,14 +384,14 @@ class PublicMain {
 
     setRoom(room) {
       console.log(room);
-      for (const voxel of room.voxel) {
-          this.addVoxel(voxel);
+      for (const voxel of room.room.voxel) {
+          this.addVoxel(voxel, room.room.materials);
       }
     }
 
-    addVoxel(data) {
-        const geometry = new THREE.BoxGeometry(this.BOX_SIZE, this.BOX_SIZE, this.BOX_SIZE, 2, 2, 2);
-        const material = new THREE.MeshLambertMaterial( { color: data.m, opacity: data.a, transparent: true } );
+    addVoxel(data, materials) {
+        const geometry = new THREE.BoxBufferGeometry(this.BOX_SIZE, this.BOX_SIZE, this.BOX_SIZE, 2, 2, 2);
+        const material = new THREE.MeshBasicMaterial( { color: materials[data.m].color, opacity: materials[data.m].alpha, transparent: true } );
         const box = new THREE.Mesh(geometry, material);
         box.position.set(data.x * 50, data.y * 50, data.z * 50);
         box.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
@@ -248,53 +406,60 @@ class PublicMain {
         this.objects.push( box );
         this.objectsMaterial.push(this.cubeMaterial[this.materialIndex]);
 
+        this.voxelSaveData.push({
+          x: data.x,
+          y: data.y,
+          z: data.z,
+          m: data.m
+        });
+
     }
 
-    socketio() {
-        this.socket.on('getUserId', (data) => {
-            console.log("getUserId" + data);
-            this.id = data;
-            this.socket.emit('getUserId', {userid: data, roomhost: this.roomhost, roomname: this.roomname});
-        });
-        this.socket.on('connected', data => {
-            console.log("connected" + data);
+    // socketio() {
+    //     this.socket.on('getUserId', (data) => {
+    //         console.log("getUserId" + data);
+    //         this.id = data;
+    //         this.socket.emit('getUserId', {userid: data, roomhost: this.roomhost, roomname: this.roomname});
+    //     });
+    //     this.socket.on('connected', data => {
+    //         console.log("connected" + data);
 
 
-            if (data.room.voxel.length > 0) {
-              for (const voxel of data.room.voxel) {
-                  this.addVoxel(voxel);
-              }
-            } else {
-              fetch('/apinum').then( (res) => res.json() ).then( (num) => {
-                  fetch('/api/' + num + location.pathname).then( (res) => res.json() ).then( (room) => {
-                      this.setRoom(room);
-                  });
-              });
-            }
+    //         if (data.room.voxel.length > 0) {
+    //           for (const voxel of data.room.voxel) {
+    //               this.addVoxel(voxel);
+    //           }
+    //         } else {
+    //           fetch('/apinum').then( (res) => res.json() ).then( (num) => {
+    //               fetch('/api/' + num + location.pathname).then( (res) => res.json() ).then( (room) => {
+    //                   this.setRoom(room);
+    //               });
+    //           });
+    //         }
 
-        });
-        this.socket.on('put', (data) => {
-            console.log(data);
+    //     });
+    //     this.socket.on('put', (data) => {
+    //         console.log(data);
 
-            if (data.userID != this.id) {
-                this.addVoxel(data.voxel[data.voxel.length - 1]);
-            }
-            // var voxel = data.voxel[data.voxel.length - 1];//new THREE.Mesh(this.cubeGeo, this.cubeMaterial[this.materialIndex]);
-            // // voxel.position.copy(intersect.point).add(intersect.face.normal);
-            // // voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
-            // this.scene.add(voxel);
-            // var edges = new THREE.EdgesGeometry(this.cubeGeo);
-            // this.lineBox.push( new THREE.LineSegments( edges, new THREE.LineBasicMaterial({ color: 0x000000 })) );
-            // this.lineBox[this.lineBox.length - 1].position.//copy( intersect.point ).add( intersect.face.normal );
-            // this.lineBox[this.lineBox.length - 1].position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );						
-            // this.scene.add(this.lineBox[this.lineBox.length - 1]);
+    //         if (data.userID != this.id) {
+    //             this.addVoxel(data.voxel[data.voxel.length - 1]);
+    //         }
+    //         // var voxel = data.voxel[data.voxel.length - 1];//new THREE.Mesh(this.cubeGeo, this.cubeMaterial[this.materialIndex]);
+    //         // // voxel.position.copy(intersect.point).add(intersect.face.normal);
+    //         // // voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+    //         // this.scene.add(voxel);
+    //         // var edges = new THREE.EdgesGeometry(this.cubeGeo);
+    //         // this.lineBox.push( new THREE.LineSegments( edges, new THREE.LineBasicMaterial({ color: 0x000000 })) );
+    //         // this.lineBox[this.lineBox.length - 1].position.//copy( intersect.point ).add( intersect.face.normal );
+    //         // this.lineBox[this.lineBox.length - 1].position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );						
+    //         // this.scene.add(this.lineBox[this.lineBox.length - 1]);
 
             
-            // this.objects.push(voxel);
-            // this.objectsMaterial.push(this.cubeMaterial[this.materialIndex]);
+    //         // this.objects.push(voxel);
+    //         // this.objectsMaterial.push(this.cubeMaterial[this.materialIndex]);
 
-        });
-    }
+    //     });
+    // }
 
     onWindowResize() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -411,7 +576,7 @@ class PublicMain {
                         z: Math.floor( voxel.position.z / 50 ),
                         m: voxel.material.color,
                         i: this.materialIndex,
-                        a: this.opacity,
+                        a: this.opacities[this.materialIndex],
                     },
                     
                 }
@@ -467,6 +632,7 @@ class PublicMain {
                 this.objectsMaterial.splice(this.objectsMaterial.indexOf(intersect.object.material), 1);
                 const index = this.objects.indexOf(intersect.object);
                 this.objects.splice(index, 1);
+                this.voxelSaveData.splice(index - 2, 1);
                 for (const l of this.lineBox) {
                   this.scene.remove(l);
                 }
@@ -500,22 +666,26 @@ class PublicMain {
                 this.objects.push(voxel);
                 this.objectsMaterial.push(this.cubeMaterial[this.materialIndex]);
 
-                this.socket.emit("put",
-                {
-                    userID: this.id,
-                    roomhost: this.roomhost,
-                    roomname: this.roomname,
-                    voxel: {
-                        x: Math.floor( voxel.position.x / 50 ),
-                        y: Math.floor( voxel.position.y / 50 ),
-                        z: Math.floor( voxel.position.z / 50 ),
-                        m: voxel.material.color,
-                        i: this.materialIndex,
-                        a: this.opacity,
-                    },
-                    
-                }
-                );
+                this.voxelSaveData.push({
+                  x: Math.floor( voxel.position.x / 50 ),
+                  y: Math.floor( voxel.position.y / 50 ),
+                  z: Math.floor( voxel.position.z / 50 ),
+                  m: this.materialIndex
+                });
+
+                // this.socket.emit("put",
+                // {
+                //     userID: this.id,
+                //     roomhost: this.roomhost,
+                //     roomname: this.roomname,
+                //     voxel: {
+                //         x: Math.floor( voxel.position.x / 50 ),
+                //         y: Math.floor( voxel.position.y / 50 ),
+                //         z: Math.floor( voxel.position.z / 50 ),
+                //         m: this.materialIndex
+                //     }
+                // }
+                // );
               }
     
             }
@@ -582,4 +752,89 @@ class PublicMain {
         var self = this;
         requestAnimationFrame(function(){ self.loop(); });
     }
+
+
+
+
+
+
+
+    // import { OBJLoader } from './jsm/loaders/OBJLoader.js';
+    // import { GLTFExporter } from './jsm/exporters/GLTFExporter.js';
+    // import { GUI } from './jsm/libs/lil-gui.module.min.js';
+
+    exportGLTF( input ) {
+
+      const gltfExporter = new GLTFExporter();
+      const scene2 = new THREE.Scene();
+      scene2.name = "Scene2";
+      const params = {
+				trs: false,
+				onlyVisible: true,
+				truncateDrawRange: true,
+				binary: false,
+				maxTextureSize: 4096,
+				exportScene1: this.scene
+			};
+
+
+      const options = {
+        trs: params.trs,
+        onlyVisible: params.onlyVisible,
+        truncateDrawRange: params.truncateDrawRange,
+        binary: params.binary,
+        maxTextureSize: params.maxTextureSize
+      };
+      gltfExporter.parse(
+        input,
+        function ( result ) {
+
+          if ( result instanceof ArrayBuffer ) {
+
+            saveArrayBuffer( result, 'scene.glb' );
+
+          } else {
+
+            const output = JSON.stringify( result, null, 2 );
+            console.log( output );
+            saveString( output, 'scene.gltf' );
+
+          }
+
+        },
+        function ( error ) {
+
+          console.log( 'An error happened during parsing', error );
+
+        },
+        options
+      );
+
+    }
+}
+
+function save( blob, filename ) {
+  const link = document.createElement( 'a' );
+  link.style.display = 'none';
+  document.body.appendChild( link ); // Firefox workaround, see #6594
+
+  link.href = URL.createObjectURL( blob );
+  link.download = filename;
+  link.click();
+
+  // URL.revokeObjectURL( url ); breaks Firefox...
+
+}
+
+function saveString( text, filename ) {
+
+  save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+
+}
+
+
+function saveArrayBuffer( buffer, filename ) {
+
+  save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+
 }
