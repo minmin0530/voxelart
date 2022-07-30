@@ -836,6 +836,6 @@ app.post('/save', (req, res) => {
   transactionVoxelInsert(req.body, res);
 });
 
-http.listen(8080, () => {
-  console.log('listening on :8080');
+http.listen(80, () => {
+  console.log('listening on :80');
 });
