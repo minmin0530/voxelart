@@ -27,10 +27,10 @@ app.get("/download", (req, res) => {
 app.get("/lib/OrbitControls.js", (req, res) => {
   res.sendFile(__dirname + "/lib/OrbitControls.js");
 });
-app.get("/yoshiki/lib/GLTFExporter.js", (req, res) => {
+app.get("/lib/GLTFExporter.js", (req, res) => {
   res.sendFile(__dirname + "/lib/GLTFExporter.js");
 });
-app.get("/yoshiki/lib/three.js", (req, res) => {
+app.get("/lib/three.js", (req, res) => {
   res.sendFile(__dirname + "/lib/three.js");
 });
 app.get("/src/main.js", (req, res) => {
@@ -241,7 +241,7 @@ const allURL = async (adocs) => {
 
           res.sendFile(__dirname + "/publicroom.html");
         } else if (req.session.name == adocs.value.name && req.session.password == adocs.value.password && (r.private == 1 || r.private == '1')) {
-          res.sendFile(__dirname + "/privateroom.html");
+          res.sendFile(__dirname + "/publicroom.html");
         } else {
           res.send("login error");
         }
@@ -272,6 +272,12 @@ const allURL = async (adocs) => {
               }
             });
 
+            app.get('/' + doc.name + "/lib/GLTFExporter.js", (req, res) => {
+              res.sendFile(__dirname + "/lib/GLTFExporter.js");
+            });
+            app.get('/' + doc.name + "/lib/three.js", (req, res) => {
+              res.sendFile(__dirname + "/lib/three.js");
+            });
             app.get('/' + doc.name + "/lib/OrbitControls.js", (req, res) => {
               res.sendFile(__dirname + "/lib/OrbitControls.js");
             });
@@ -330,7 +336,7 @@ const allURL = async (adocs) => {
 
                     res.sendFile(__dirname + "/publicroom.html");
                   } else if (req.session.name == doc.name && req.session.password == doc.password && (r.private == 1 || r.private == '1')) {
-                    res.sendFile(__dirname + "/privateroom.html");
+                    res.sendFile(__dirname + "/publicroom.html");
                   } else {
                     res.send("login error");
                   }
