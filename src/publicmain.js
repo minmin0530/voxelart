@@ -382,11 +382,48 @@ class PublicMain {
         this.loop();
     }
 
+    toColor(num) {
+      num >>>= 0;
+      let b = num & 0xFF,
+          g = (num & 0xFF00) >>> 8,
+          r = (num & 0xFF0000) >>> 16;
+
+
+          let bb;
+          if (b < 16) {
+            bb = "0" + b.toString(16);
+          } else {
+            bb = b.toString(16);
+          }
+          let gg;
+          if (g < 16) {
+            gg = "0" + g.toString(16);
+          } else {
+            gg = g.toString(16);
+          }
+          let rr;
+          if (r < 16) {
+            rr = "0" + r.toString(16);
+          } else {
+            rr = r.toString(16);
+          }
+
+      return "#" + rr + gg + bb;
+
+    }
+
     setRoom(room) {
-      console.log(room);
       for (const voxel of room.room.voxel) {
           this.addVoxel(voxel, room.room.materials);
       }
+
+
+      for (let i = 0; i < 16; ++i) {
+        this.cubeMaterial[i] = new THREE.MeshBasicMaterial({ color: room.room.materials[i].color, opacity: room.room.materials[i].alpha, transparent: true });
+        document.getElementById("color" + (i + 1)).value = this.toColor(room.room.materials[i].color);
+        document.getElementById("alpha" + (i + 1)).value = 100 * room.room.materials[i].alpha;        
+      }
+      this.rollOverMesh.material.color.set(document.getElementById("color1").value);
     }
 
     addVoxel(data, materials) {
