@@ -652,6 +652,7 @@ io.on('connection', socket => {
     ++index;
   }
 
+  loginUsers[index].tempid = Math.floor(Math.random() * 100000);
   if (connected) {
     io.to(socket.id).emit('connected', {
       userID: loginUsers[index].tempid,
