@@ -18,6 +18,10 @@ class PublicMain {
         this.rollOverMeshAfterPos = new THREE.Vector3(0.0, 0.0, 0.0);
         this.rollOverMeshBeforePos = new THREE.Vector3(0.0, 0.0, 0.0);
         this.rollOverMesh = {};
+        this.reserveFlag = false;
+        this.reserveMesh1;
+        this.reserveMeshArray = [];
+        this.reserveIndex = 0;
         this.rollOverMaterial = {};
         this.cubeGeo = {};  //progress_historyでも使う
         this.cubeMaterial = []; //progress_historyでも使う
@@ -37,6 +41,11 @@ class PublicMain {
         // this.item2 = new Item2();
         // this.item3 = new Item3();
         this.deleteFlag = false;
+        this.POINT = 0;
+        this.DELETE = 1;
+        this.LINE = 2;
+        this.PLANE = 3;
+        this.modeState = this.POINT;
         this.BOX_SIZE = 50;
         this.init();
     }
@@ -55,6 +64,15 @@ class PublicMain {
         this.rollOverMesh = new THREE.Mesh(rollOverGeo, this.rollOverMaterial);
         this.scene.add(this.rollOverMesh);
 
+
+        this.reserveMesh1 = new THREE.Mesh(rollOverGeo, this.rollOverMaterial);
+        for (let i = 0; i < 400; ++i) {
+          let array = [];
+          for (let j = 0; j < 20; ++j) {
+            array.push( new THREE.Mesh(rollOverGeo, this.rollOverMaterial) );
+          }
+          this.reserveMeshArray.push(array);
+        }
 
         this.cubeGeo = new THREE.BoxBufferGeometry(this.BOX_SIZE, this.BOX_SIZE, this.BOX_SIZE);
         this.cubeMaterial.push(new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 1.0, transparent: true  }));
@@ -228,9 +246,30 @@ class PublicMain {
             this.render();
         }, false);
         document.getElementById("delete").addEventListener('change', () => {
-          this.deleteFlag = document.getElementById("delete").checked;
+          if (document.getElementById("delete").checked) {
+            this.modeState = this.DELETE;
+          }
           this.render();
         }, false);
+        document.getElementById("point").addEventListener('change', () => {
+          if (document.getElementById("point").checked) {
+            this.modeState = this.POINT;
+          }
+          this.render();
+        }, false);
+        document.getElementById("line").addEventListener('change', () => {
+          if (document.getElementById("line").checked) {
+            this.modeState = this.LINE;
+          }
+          this.render();
+        }, false);
+        document.getElementById("plane").addEventListener('change', () => {
+          if (document.getElementById("plane").checked) {
+            this.modeState = this.PLANE;
+          }
+          this.render();
+        }, false);
+
         document.getElementById("download").addEventListener('click', () => {
 
           // // const voxels = [];
@@ -297,32 +336,32 @@ class PublicMain {
           // origin
           this.exportGLTF(this.scene);
 
-          this.scene.add(this.plane);
-          this.scene.add(this.planeY);
-          this.scene.add(this.gridHelper);
-          this.scene.add(this.gridHelperY);
-          this.scene.add(this.rollOverMesh);
+          // this.scene.add(this.plane);
+          // this.scene.add(this.planeY);
+          // this.scene.add(this.gridHelper);
+          // this.scene.add(this.gridHelperY);
+          // this.scene.add(this.rollOverMesh);
 
-          for (const l of this.lineBox) {
-            this.scene.add(l);
-          }
-
-
-          // for (let h = 0; h < 999; ++h) {
-
-          //   for (let i = 0; i < 16; ++i) {
-          //     this.cubeMaterial[i] = new THREE.MeshBasicMaterial({ color: Math.floor(Math.random() * 16777216), opacity: this.opacities[i], transparent: true  });
-          //   }
-
-          //   let j = 0;
-          //   for (const o of this.objects) {
-          //     if (o != this.plane && o != this.planeY) {
-          //       o.material = this.cubeMaterial[this.voxelSaveData[j].m];
-          //       ++j;
-          //     }
-          //   }
-          //   this.exportGLTF(this.scene);
+          // for (const l of this.lineBox) {
+          //   this.scene.add(l);
           // }
+
+
+          for (let h = 0; h < 299; ++h) {
+
+            for (let i = 0; i < 16; ++i) {
+              this.cubeMaterial[i] = new THREE.MeshBasicMaterial({ color: Math.floor(Math.random() * 16777216), opacity: this.opacities[i], transparent: true  });
+            }
+
+            let j = 0;
+            for (const o of this.objects) {
+              if (o != this.plane && o != this.planeY) {
+                o.material = this.cubeMaterial[this.voxelSaveData[j].m];
+                ++j;
+              }
+            }
+            this.exportGLTF(this.scene);
+          }
         }, false);
         document.getElementById("save").addEventListener('click', () => {
           const sendData = {
@@ -369,9 +408,9 @@ class PublicMain {
           body: JSON.stringify({roomhost: this.roomhost, roomname: this.roomname}),
         };
 
-        fetch('/getroom', param).then( (res) => res.json() ).then( (room) => {
-            this.setRoom(room);
-        });
+        // fetch('/getroom', param).then( (res) => res.json() ).then( (room) => {
+        //     this.setRoom(room);
+        // });
 
         this.camera.updateProjectionMatrix();
         this.controls.update();
@@ -515,6 +554,35 @@ class PublicMain {
         this.raycaster.setFromCamera(this.mouse, this.camera);
     
         const intersects = this.raycaster.intersectObjects(this.objects);
+
+
+        if (this.modeState == this.PLANE) {
+          if (this.reserveFlag) {
+
+            for (let i = 5; i < 15; ++i) {
+              for (let j = 5; j < 15; ++j) {
+                this.reserveMeshArray[i][j].visible = false;
+              }
+            }
+          
+          // const intersect = intersects[ 0 ];
+          // var voxel = this.reserveMeshArray[this.reserveIndex]; //new THREE.Mesh(this.cubeGeo, this.cubeMaterial[Math.floor(Math.random() * 3)]);
+          // voxel.position.set(this.reserveMesh1.position.x + 50 * this.reserveIndex,this.reserveMesh1.position.y,this.reserveMesh1.position.z);
+          // voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+          // this.scene.add(voxel);
+          // var edges = new THREE.EdgesGeometry(this.cubeGeo);
+          // this.lineBox.push( new THREE.LineSegments( edges, new THREE.LineBasicMaterial({ color: 0x000000 })) );
+          // this.lineBox[this.lineBox.length - 1].position.set(voxel.position.x, voxel.position.y, voxel.position.z);
+          // this.lineBox[this.lineBox.length - 1].position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );						
+          // this.scene.add(this.lineBox[this.lineBox.length - 1]);
+  
+          
+          // this.objects.push(voxel);
+          // this.objectsMaterial.push(this.cubeMaterial[this.materialIndex]);
+
+          // this.reserveIndex += 1;
+          }
+        }
 
         if (intersects.length > 0 && (intersects[0].object == this.plane || intersects[0].object == this.planeY ) ) {
           const intersect = intersects[ 0 ];
@@ -660,7 +728,7 @@ class PublicMain {
     
             // delete cube
     
-            if (this.deleteFlag) {
+            if (this.modeState == this.DELETE) {
     
               if (intersect.object !== this.plane && intersect.object !== this.planeY) {
     
@@ -682,7 +750,7 @@ class PublicMain {
     
               // create cube
     
-            } else {
+            } else if (this.modeState == this.POINT) {
     
               if (this.colorChangeFlag) {
                 if (intersect.object !== this.plane) {
@@ -725,6 +793,35 @@ class PublicMain {
                 // );
               }
     
+            } else if (this.modeState == this.LINE) {
+
+            } else if (this.modeState == this.PLANE && this.reserveFlag == false) {
+              this.reserveFlag = true;
+              var voxel = this.reserveMesh1;
+              for (let xx = intersect.point.x; xx < 20 * 50 + intersect.point.x; xx += 50) {
+                for (let yy = 0; yy < 1; ++yy) {
+                  let xxx = 0;
+                  for (let zz = intersect.point.z; zz < 20 * 50 + intersect.point.z; zz += 50) {
+              var voxel = this.reserveMeshArray[this.reserveIndex][xxx]; //new THREE.Mesh(this.cubeGeo, this.cubeMaterial[Math.floor(Math.random() * 3)]);
+              xxx += 1;
+              voxel.position.set(xx,yy,zz);
+              voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+              this.scene.add(voxel);
+              var edges = new THREE.EdgesGeometry(this.cubeGeo);
+              this.lineBox.push( new THREE.LineSegments( edges, new THREE.LineBasicMaterial({ color: 0x000000 })) );
+              this.lineBox[this.lineBox.length - 1].position.set(voxel.position.x, voxel.position.y, voxel.position.z);
+              this.lineBox[this.lineBox.length - 1].position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );						
+              this.scene.add(this.lineBox[this.lineBox.length - 1]);
+      
+              
+              this.objects.push(voxel);
+              this.objectsMaterial.push(this.cubeMaterial[this.materialIndex]);
+              }
+              this.reserveIndex += 1;
+
+            }
+          }
+      
             }
     
             this.render();

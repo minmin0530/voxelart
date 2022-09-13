@@ -480,10 +480,10 @@ const transactionKururiInsert = async (data, res) => {
     client = await MongoClient.connect('mongodb://127.0.0.1:27017', {useNewUrlParser:true, useUnifiedTopology:true});
     const db = client.db(dbName);
     const collection = db.collection('account');
-    const a = await collection.updateOne({mail:data.mail, password:data.password, name:data.name, date:data.date, room: [{ name: data.room.name, private: data.room.private }]}, {$set:data}, true );
-    if (a.result.n == 0) {
-      await collection.insertOne(data);
-    }
+    const a = await collection.updateOne({mail:data.mail, password:data.password, name:data.name, date:data.date, room: [{ name: data.room.name, private: data.room.private }]}, {$set:data}, {upsert: true} );
+    // if (a.result.n == 0) {
+    //   await collection.insertOne(data);
+    // }
     const r = new Room();
     r.roomhost = data.name;
     r.roomname = data.room.name;

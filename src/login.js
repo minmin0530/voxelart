@@ -1,3 +1,52 @@
+function colorToText(mm) {
+  let colorText = '#';
+  let m1 = Math.floor(mm.r * 255 % 16);
+  let m2 = Math.floor(mm.r * 255 / 16);
+  if      (m1 == 10) { m1 = 'a'; }
+  else if (m1 == 11) { m1 = 'b'; }
+  else if (m1 == 12) { m1 = 'c'; }
+  else if (m1 == 13) { m1 = 'd'; }
+  else if (m1 == 14) { m1 = 'e'; }
+  else if (m1 == 15) { m1 = 'f'; }
+  if      (m2 == 10) { m2 = 'a'; }
+  else if (m2 == 11) { m2 = 'b'; }
+  else if (m2 == 12) { m2 = 'c'; }
+  else if (m2 == 13) { m2 = 'd'; }
+  else if (m2 == 14) { m2 = 'e'; }
+  else if (m2 >= 15) { m2 = 'f'; }
+  colorText += m2 + '' + m1;
+  m1 = Math.floor(mm.g * 255 % 16);
+  m2 = Math.floor(mm.g * 255 / 16);
+  if      (m1 == 10) { m1 = 'a'; }
+  else if (m1 == 11) { m1 = 'b'; }
+  else if (m1 == 12) { m1 = 'c'; }
+  else if (m1 == 13) { m1 = 'd'; }
+  else if (m1 == 14) { m1 = 'e'; }
+  else if (m1 == 15) { m1 = 'f'; }
+  if      (m2 == 10) { m2 = 'a'; }
+  else if (m2 == 11) { m2 = 'b'; }
+  else if (m2 == 12) { m2 = 'c'; }
+  else if (m2 == 13) { m2 = 'd'; }
+  else if (m2 == 14) { m2 = 'e'; }
+  else if (m2 >= 15) { m2 = 'f'; }
+  colorText += m2 + '' + m1;
+  m1 = Math.floor(mm.b * 255 % 16);
+  m2 = Math.floor(mm.b * 255 / 16);
+  if      (m1 == 10) { m1 = 'a'; }
+  else if (m1 == 11) { m1 = 'b'; }
+  else if (m1 == 12) { m1 = 'c'; }
+  else if (m1 == 13) { m1 = 'd'; }
+  else if (m1 == 14) { m1 = 'e'; }
+  else if (m1 == 15) { m1 = 'f'; }
+  if      (m2 == 10) { m2 = 'a'; }
+  else if (m2 == 11) { m2 = 'b'; }
+  else if (m2 == 12) { m2 = 'c'; }
+  else if (m2 == 13) { m2 = 'd'; }
+  else if (m2 == 14) { m2 = 'e'; }
+  else if (m2 >= 15) { m2 = 'f'; }
+  colorText += m2 + '' + m1;
+  return colorText;
+}
 class Main {
     constructor() {
         this.camera = {};
@@ -44,9 +93,12 @@ class Main {
 
 
         this.cubeGeo = new THREE.BoxBufferGeometry(50, 50, 50);
-        // for (let l = 0; l < 16; ++l) {
-          this.cubeMaterial.push(new THREE.MeshLambertMaterial({ color: 0xff0000, opacity: 1.0, transparent: true  }));
-        // }
+        for (let l = 0; l < 16; ++l) {
+
+          const c = {r: Math.random(), g: Math.random(), b: Math.random()  };
+          
+          this.cubeMaterial.push(new THREE.MeshLambertMaterial({ color: colorToText(c), opacity: 0.7, transparent: true  }));
+        }
 
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
@@ -126,6 +178,35 @@ class Main {
             this.renderer.setClearColor(document.getElementById("color2").value, 1.0);
             this.render();
         }, false);
+
+
+        for (let ii = 0; ii < 6; ii += 2) {
+        for (let xx = 2 - ii / 2; xx < 3 + ii / 2; ++xx) {
+          for (let yy = 0 + ii; yy < 9 - ii; ++yy) {
+            for (let zz = 2 - ii / 2; zz < 3 + ii / 2; ++zz) {
+
+        var voxel = new THREE.Mesh(this.cubeGeo, this.cubeMaterial[Math.floor(Math.random() * 3)]);
+        voxel.position.set(50 * xx,50 * yy,50 * zz);
+        voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+        this.scene.add(voxel);
+        var edges = new THREE.EdgesGeometry(this.cubeGeo);
+        this.lineBox.push( new THREE.LineSegments( edges, new THREE.LineBasicMaterial({ color: 0x000000 })) );
+        this.lineBox[this.lineBox.length - 1].position.set(voxel.position.x, voxel.position.y, voxel.position.z);
+        this.lineBox[this.lineBox.length - 1].position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );						
+        this.scene.add(this.lineBox[this.lineBox.length - 1]);
+
+        
+        this.objects.push(voxel);
+        this.objectsMaterial.push(this.cubeMaterial[this.materialIndex]);
+        }
+      }
+    }
+  }
+
+
+
+
+
 
         this.loop();
     }
