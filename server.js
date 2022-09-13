@@ -652,7 +652,7 @@ io.on('connection', socket => {
     ++index;
   }
 
-  loginUsers[index].tempid = Math.floor(Math.random() * 100000);
+  loginUsers[0].tempid = Math.floor(Math.random() * 100000);
   if (connected) {
     io.to(socket.id).emit('connected', {
       userID: loginUsers[index].tempid,
@@ -661,7 +661,7 @@ io.on('connection', socket => {
       room: room[0],
     });
   } else {
-    io.to(socket.id).emit('getUserId', loginUsers[loginUsers.length - 1].tempid);
+    io.to(socket.id).emit('getUserId', loginUsers[0].tempid);
   }
   socket.on('getUserId', data => {
     if (data == null) {
