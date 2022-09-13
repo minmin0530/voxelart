@@ -652,17 +652,16 @@ io.on('connection', socket => {
     ++index;
   }
 
-  loginUsers[0].tempid = Math.floor(Math.random() * 100000);
-  if (connected) {
+  // if (connected) {
     io.to(socket.id).emit('connected', {
       userID: loginUsers[index].tempid,
       // roomID: loginUsers[index].roomid,
       color: loginUsers[index].color,
       room: room[0],
     });
-  } else {
-    io.to(socket.id).emit('getUserId', loginUsers[0].tempid);
-  }
+  // } else {
+  //   io.to(socket.id).emit('getUserId', loginUsers[loginUsers.length - 1].tempid);
+  // }
   socket.on('getUserId', data => {
     if (data == null) {
     let user = {
