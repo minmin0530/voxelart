@@ -396,6 +396,7 @@ class PublicMain {
             },
             body: JSON.stringify(sendData),
           };
+	  saveString(JSON.stringify(sendData), "voxelart.json");
           fetch('/save', param).then( res => res.json() ).then( (data) => { console.log(data); });
         }, false);
 
